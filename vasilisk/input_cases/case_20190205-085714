@@ -4,4 +4,4 @@ function foo() {
     console.log("hello world");
 }
 
-foo()
+%DisassembleFunction(foo)
