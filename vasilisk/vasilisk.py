@@ -6,7 +6,7 @@ import sys
 import threading
 import uuid
 
-from Queue import Queue
+from queue import Queue
 
 from datetime import datetime
 from fuzzers.file import Fuzzer
@@ -39,7 +39,7 @@ class Vasilisk:
         case_folder = os.path.join(self.crashes, file_name)
 
         if os.path.exists(case_folder):
-            self._logger.error('duplicate case folder')
+            self.logger.error('duplicate case folder')
             sys.exit(1)
 
         os.mkdir(case_folder)
@@ -76,7 +76,7 @@ class Vasilisk:
                     curr_time = datetime.now().strftime('%Y.%m.%d-%H:%M:%S')
                     file_name = str(uuid.uuid4()) + curr_time
 
-                self.commit_test(test_case, curr_time)
+                self.commit_test(test_case, file_name)
 
             self.queue.task_done()
 
