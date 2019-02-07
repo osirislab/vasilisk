@@ -1,97 +1,149 @@
 #!/usr/bin/env python3
 import logging
 import os
-import shutil
 import subprocess
 import sys
+import time
+import uuid
+
+import click
 
 from datetime import datetime
-from fuzzers.base import Fuzzer
-from config import v8_out_path
-from glob import glob
+from multiprocessing import Process, JoinableQueue
+
+import fuzzers
+
 
 class Vasilisk:
-    def __init__(self, debug=False):
-        self._logger = logging.getLogger(__name__)
-        self._input_folder = os.path.join(os.getcwd(), 'input_cases')
-        self.d8_command = f"{v8_out_path}d8"
-        self._fuzzer = Fuzzer(self._input_folder, self.d8_command)
+    def __init__(self, fuzzer, d8, procs, iterations, crashes, tests, debug):
+        self.logger = logging.getLogger(__name__)
+        self.crashes = crashes
+        self.tests = tests
+        self.d8 = d8
+
+        self.fuzzer = fuzzers.fuzzers[fuzzer]()
         self.debug = debug
-        
-        self.commits = []
-        self.deletions = []
 
-    def create_test(self, case_string):
+        self.iterations = iterations
+        self.queue = JoinableQueue(self.iterations)
+        self.procs = procs
+        self.threads = []
+
+        if not os.path.exists(self.crashes):
+            self.logger.error('crashes folder does not exist')
+            sys.exit(1)
+
+        if not os.path.exists(self.tests):
+            self.logger.error('tests folder does not exist')
+            sys.exit(1)
+
+    def create_test(self, test_case, file_name):
         """Takes generated test case and writes to file"""
-        current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-        test_case = 'case_' + current_time
-        with open(os.path.join(self._input_folder, test_case), 'w+') as f:
-            f.write(case_string)
+        with open(os.path.join(self.tests, file_name), 'w+') as f:
+            f.write(test_case)
 
-        return test_case
-
-    def commit_test(self, test_case):
+    def commit_test(self, test_case, file_name):
         """Test case valuable, save to logs"""
-        base_folder = os.path.normpath(os.getcwd() + os.sep + os.pardir)
-        logs_folder = os.path.join(base_folder, 'logs')
-
-        if not os.path.exists(logs_folder):
-            os.mkdir(logs_folder)
-
-        case_folder = os.path.join(logs_folder, test_case)
+        case_folder = os.path.join(self.crashes, file_name)
 
         if os.path.exists(case_folder):
-            self._logger.error('duplicate case folder')
+            self.logger.error('duplicate case folder')
             sys.exit(1)
 
         os.mkdir(case_folder)
 
-        src = os.path.join(self._input_folder, test_case)
-        dest = os.path.join(case_folder, 'test_case')
-        shutil.copyfile(src, dest)
+        dest = os.path.join(case_folder, 'input')
+        with open(dest, 'w+') as f:
+            f.write(test_case)
 
-    def delete_test(self, test_case):
-        os.remove(os.path.join(self._input_folder, test_case))
-
-    def instrument(self, test_case):
-        self._logger.info(" instrumenting ...  ")
-        return self._fuzzer.instrument(test_case);
-
-    def flush(self, cases, action):
-        while(len(cases)):
-            action(cases.pop()) 
-
-    def destroy(self):
-        self.flush(self.commits, self.commit_test)
-        if self.debug:
-            while(len(self.deletions)):
-                shutil.copy(self.deletions.pop(), "/tmp")
-        else:
-            self.flush(self.deletions, self.delete_test)
+    def execute(self, test_case):
+        return subprocess.check_output(
+            [self.d8, '-e', '--allow-natives-syntax', test_case]
+        )
 
     def fuzz(self):
-        for case in glob(f"{self._input_folder}/*.js"):
-            test_case = self.create_test(self._fuzzer.test(case))
-            output = self.instrument(os.path.join(self._input_folder, test_case))
+        while True:
+            test_case = self.queue.get()
 
-            if not self._fuzzer.validate(output, ""):
-                self._logger.info('  found fuzzing target')
-                self.commits.append(test_case)
-            else:
-                self.deletions.append(test_case)
-            
-            if len(self.commits) % 2**8 == 0:
-                self.flush(self.commits, self.commit_test)
+            if test_case is None:
+                break
 
-            if len(self.deletions) % 2**8 == 0:
-                if self.debug:
-                    while(len(self.deletions)):
-                        shutil.copy(self.deletions.pop(), "/tmp")
-                else:
-                    self.flush(self.deletions, self.delete_test)
+            file_name = ''
+
+            if self.debug:
+                curr_time = datetime.now().strftime('%Y.%m.%d-%H:%M:%S')
+                file_name = str(uuid.uuid4()) + '_' + curr_time
+                self.create_test(test_case, file_name)
+
+            output = self.execute(test_case)
+
+            if not self.fuzzer.validate(output):
+                self.logger.info('found fuzzing target')
+
+                if not file_name:
+                    curr_time = datetime.now().strftime('%Y.%m.%d-%H:%M:%S')
+                    file_name = str(uuid.uuid4()) + curr_time
+
+                self.commit_test(test_case, file_name)
+
+            self.queue.task_done()
+
+    def generate(self):
+        while not self.queue.full():
+            self.queue.put(self.fuzzer.generate())
+
+    def start(self):
+        self.logger.info('my pid is {}'.format(os.getpid()))
+        start_time = time.time()
+
+        for _ in range(self.procs):
+            t = Process(target=self.fuzz)
+            t.daemon = True
+            t.start()
+            self.threads.append(t)
+
+        self.generate()
+        self.logger.info('generated all cases')
+
+        self.queue.join()
+
+        self.logger.info('processed all cases')
+
+        for _ in range(self.procs):
+            self.queue.put(None)
+
+        for t in self.threads:
+            t.join()
+
+        end_time = time.time()
+
+        self.logger.info('finished {} in {} seconds'.format(
+                         self.iterations,
+                         end_time - start_time))
+
+
+@click.command()
+@click.option('--fuzzer', required=True,
+              type=click.Choice(['file', 'optimize']),
+              help='which fuzzer to use. differences in README')
+@click.option('--d8', envvar='D8_PATH',
+              help='location of d8 executable. defaults to value stored \
+              in D8_PATH environment variable')
+@click.option('--procs', default=8, help='worker processes to create')
+@click.option('--iterations', default=1000, help='number of iterations')
+@click.option('--crashes', default='./crashes',
+              help='where to store crash findings')
+@click.option('--tests', default='/tmp/vasilisk/tests',
+              help='where to store inputs if debug mode on')
+@click.option('--debug', is_flag=True, default=False,
+              help='debug mode turns on more debug messages and stores all \
+              test inputs to specified test folder')
+def main(fuzzer, d8, procs, iterations, crashes, tests, debug):
+    logging.basicConfig(level=logging.DEBUG)
+
+    driver = Vasilisk(fuzzer, d8, procs, iterations, crashes, tests, debug)
+    driver.start()
+
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    driver = Vasilisk()
-    driver.fuzz()
-    driver.destroy()
+    main()

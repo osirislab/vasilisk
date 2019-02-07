@@ -5,7 +5,7 @@ let f = (o) => {
 }
 
 for (let i = 0; i < 0x10000; ++i) {
- f(i); 
+ f(i);
 }
 
-print("Hello World")
+console.log("Hello World")
