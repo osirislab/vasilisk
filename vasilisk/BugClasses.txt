@@ -17,3 +17,14 @@ Integer Overflow
 Deoptimization Bug
 
 We can grab a corpus of bugs from an issue tracker as our test cases for fuzzing
+
+
+
+
+Coverage metric that focuses on different passes, and instrument a very specific area of v8. Our means over AFL is specifyin g instrumentation.
+
+
+JS O1 O2 O3 O4 and looking at code gen, hamming distance and specific hchanges are important
+Angr Validator
+
+Better validation metric (differential fuzzing)
