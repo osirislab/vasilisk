@@ -1,0 +1,30 @@
+Type Confusion
+Optimization Failure / Buggy Optimization Pass
+Out of Bounds Memory Read
+Uninitialized Values
+TurboFan
+Wasm
+Improper Deserialization and Containerization Methods
+Improper IR Generation ie (bytecode generation bugs)
+Memory Corruption in JIT Pages
+crankshaft for jit (crankshaft bugs)
+Use After Free
+Use After Poison
+Memory Range Optimization
+nullptr derefs from failed type casts
+TurboFan and LiftOff Interactions
+Integer Overflow
+Deoptimization Bug
+
+We can grab a corpus of bugs from an issue tracker as our test cases for fuzzing
+
+
+
+
+Coverage metric that focuses on different passes, and instrument a very specific area of v8. Our means over AFL is specifyin g instrumentation.
+
+
+JS O1 O2 O3 O4 and looking at code gen, hamming distance and specific hchanges are important
+Angr Validator
+
+Better validation metric (differential fuzzing)
