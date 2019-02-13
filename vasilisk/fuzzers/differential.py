@@ -1,7 +1,9 @@
 from .base import BaseFuzzer
 
+import uglipyjs
 
-class OptimizeFuzzer(BaseFuzzer):
+
+class DifferentialFuzzer(BaseFuzzer):
     def __init__(self):
         pass
 
@@ -9,6 +11,9 @@ class OptimizeFuzzer(BaseFuzzer):
         """Expects only function named f"""
         with open('test2.js', 'r') as f:
             input = f.read()
+
+        minified = uglipyjs.compile(input)
+        print(minified)
         input += '\nprint(f());'
         input += '\n%OptimizeFunctionOnNextCall(f);'
         input += '\nprint("optimized output:");'

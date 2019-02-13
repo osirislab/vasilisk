@@ -34,8 +34,9 @@ class Vasilisk:
             sys.exit(1)
 
         if not os.path.exists(self.tests):
-            self.logger.error('tests folder does not exist')
-            sys.exit(1)
+            os.makedirs(self.tests)
+            # self.logger.error('tests folder does not exist')
+            # sys.exit(1)
 
     def create_test(self, test_case, file_name):
         """Takes generated test case and writes to file"""
@@ -117,14 +118,14 @@ class Vasilisk:
 
         end_time = time.time()
 
-        self.logger.info('finished {} in {} seconds'.format(
+        self.logger.info('finished {} cases in {} seconds'.format(
                          self.iterations,
                          end_time - start_time))
 
 
 @click.command()
 @click.option('--fuzzer', required=True,
-              type=click.Choice(['file', 'optimize']),
+              type=click.Choice(fuzzers.fuzzers.keys()),
               help='which fuzzer to use. differences in README')
 @click.option('--d8', envvar='D8_PATH',
               help='location of d8 executable. defaults to value stored \
@@ -139,7 +140,10 @@ class Vasilisk:
               help='debug mode turns on more debug messages and stores all \
               test inputs to specified test folder')
 def main(fuzzer, d8, procs, iterations, crashes, tests, debug):
-    logging.basicConfig(level=logging.DEBUG)
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     driver = Vasilisk(fuzzer, d8, procs, iterations, crashes, tests, debug)
     driver.start()
