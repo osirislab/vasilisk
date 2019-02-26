@@ -11,11 +11,13 @@ import click
 from datetime import datetime
 from multiprocessing import Process, JoinableQueue
 
+import coverage
 import fuzzers
 
 
 class Vasilisk:
-    def __init__(self, fuzzer, d8, procs, iterations, crashes, tests, debug):
+    def __init__(self, fuzzer, d8, procs, iterations,
+                 crashes, tests, debug, turbo_coverage):
         self.logger = logging.getLogger(__name__)
         self.crashes = crashes
         self.tests = tests
@@ -23,6 +25,12 @@ class Vasilisk:
 
         self.fuzzer = fuzzers.fuzzers[fuzzer]()
         self.debug = debug
+
+        self.coverage = None
+        self.coverage_dir = os.path.join('vasilisk', 'coverage')
+
+        if turbo_coverage:
+            self.coverage = coverage.turbo.TurboCoverage()
 
         self.iterations = iterations
         self.queue = JoinableQueue(self.iterations)
@@ -35,8 +43,6 @@ class Vasilisk:
 
         if not os.path.exists(self.tests):
             os.makedirs(self.tests)
-            # self.logger.error('tests folder does not exist')
-            # sys.exit(1)
 
     def create_test(self, test_case, file_name):
         """Takes generated test case and writes to file"""
@@ -57,12 +63,16 @@ class Vasilisk:
         with open(dest, 'w+') as f:
             f.write(test_case)
 
-    def execute(self, test_case):
+    def execute(self, test_case, coverage_path=None):
+        options = ['-e', '--allow-natives-syntax']
+        if self.coverage:
+            options.append('--trace-turbo')
+            options.append('--trace-turbo-path {}'.format(coverage))
         return subprocess.check_output(
-            [self.d8, '-e', '--allow-natives-syntax', test_case]
+            [self.d8] + options + [test_case]
         )
 
-    def fuzz(self):
+    def fuzz(self, coverage_path=None):
         while True:
             test_case = self.queue.get()
 
@@ -76,7 +86,7 @@ class Vasilisk:
                 file_name = str(uuid.uuid4()) + '_' + curr_time
                 self.create_test(test_case, file_name)
 
-            output = self.execute(test_case)
+            output = self.execute(test_case, coverage_path)
 
             if not self.fuzzer.validate(output):
                 self.logger.info('found fuzzing target')
@@ -86,6 +96,9 @@ class Vasilisk:
                     file_name = str(uuid.uuid4()) + curr_time
 
                 self.commit_test(test_case, file_name)
+
+            if self.coverage:
+                print(self.coverage.parse())
 
             self.queue.task_done()
 
@@ -97,8 +110,18 @@ class Vasilisk:
         self.logger.info('my pid is {}'.format(os.getpid()))
         start_time = time.time()
 
-        for _ in range(self.procs):
-            t = Process(target=self.fuzz)
+        for i in range(self.procs):
+            args = ()
+
+            if self.coverage:
+                coverage_path = os.path.join(self.coverage_dir,
+                                             'thread{}'.format(i))
+                if not os.path.exists(coverage_path):
+                    os.makedirs(coverage_path)
+
+                args = (coverage_path,)
+
+            t = Process(target=self.fuzz, args=args)
             t.daemon = True
             t.start()
             self.threads.append(t)
@@ -139,13 +162,17 @@ class Vasilisk:
 @click.option('--debug', is_flag=True, default=False,
               help='debug mode turns on more debug messages and stores all \
               test inputs to specified test folder')
-def main(fuzzer, d8, procs, iterations, crashes, tests, debug):
+@click.option('--turbo-coverage', is_flag=True, default=False,
+              help='track coverage for turbo optimizations')
+def main(fuzzer, d8, procs, iterations, crashes, tests, debug, turbo_coverage):
     if debug:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
-    driver = Vasilisk(fuzzer, d8, procs, iterations, crashes, tests, debug)
+    driver = Vasilisk(
+        fuzzer, d8, procs, iterations, crashes, tests, debug, turbo_coverage
+    )
     driver.start()
 
 

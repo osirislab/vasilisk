@@ -1,14 +1,13 @@
-from .base import BaseFuzzer
+from .dharma import DharmaFuzzer
 
 
-class OptimizeFuzzer(BaseFuzzer):
+class OptimizeFuzzer(DharmaFuzzer):
     def __init__(self):
-        pass
+        super().__init__()
 
     def generate(self):
         """Expects only function named f"""
-        with open('test2.js', 'r') as f:
-            input = f.read()
+        input = super().generate()
         input += '\nprint(f());'
         input += '\n%OptimizeFunctionOnNextCall(f);'
         input += '\nprint("optimized output:");'

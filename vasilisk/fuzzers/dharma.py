@@ -12,7 +12,8 @@ class DharmaFuzzer(BaseFuzzer):
         random.seed(struct.unpack('q', os.urandom(8))[0])
 
         settings = open(os.path.join(
-            os.path.dirname(os.path.abspath(dharma.__file__)), 'settings.py'
+            os.path.dirname(os.path.abspath(dharma.__file__)),
+            'settings.py'
         ), 'r')
         grammars = [open(os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -26,7 +27,6 @@ class DharmaFuzzer(BaseFuzzer):
         settings.close()
 
     def generate(self):
-        """Expects only function named f"""
         return self.dharma.generate_content()
 
     def validate(self, output):
