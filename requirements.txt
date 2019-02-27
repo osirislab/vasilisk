@@ -1,0 +1,6 @@
+Click==7.0
+dharma==1.2.0
+PyExecJS==1.5.1
+redis==3.2.0
+six==1.12.0
+UgliPyJS==0.2.5

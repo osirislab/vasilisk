@@ -1,0 +1,29 @@
+%section% := value
+
+array :=
+	[+arrayvalues+]
+
+arrayvalues :=
+	%repeat%(+common:int+, ", ")
+	%repeat%(+common:short_int+, ", ")
+	%repeat%(+common:intoverflow+, ", ")
+	%repeat%(+common:byte+, ", ")
+
+math :=
+  +common:int+ +common:sign+ +common:int+
+  +common:text+ +common:sign+ +common:int+
+  +common:int+ +common:sign+ +common:text+
+  +common:text+ +common:sign+ +common:text+
+  array +common:sign+ array
+
+body :=
+  +math+
+
+wrapper :=quote
+  function f() { return +body+ }
+
+optimize :=
+  %DebugPrint(f()); %OptimizeFunctionOnNextCall(f); %DebugPrint(f());
+
+main :=
+    +wrapper+ +optimize+
