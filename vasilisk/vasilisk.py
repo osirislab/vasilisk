@@ -106,7 +106,7 @@ class Vasilisk:
                 unique_id = str(uuid.uuid4()) + '_' + curr_time
                 self.create_test(test_case, unique_id)
 
-            output = self.execute(test_case, coverage_path, unique_id)
+            output = self.execute(test_case.strip(), coverage_path, unique_id)
 
             if not self.fuzzer.validate(output):
                 self.commit_test(test_case, unique_id)

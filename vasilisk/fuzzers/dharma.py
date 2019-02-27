@@ -33,7 +33,7 @@ class DharmaFuzzer(BaseFuzzer):
         settings.close()
 
     def generate(self):
-        return self.dharma.generate_content().strip()
+        return self.dharma.generate_content()
 
     def validate(self, output):
         return True
