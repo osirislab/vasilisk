@@ -27,7 +27,11 @@ class Vasilisk:
         self.debug = debug
 
         self.coverage = None
-        self.coverage_dir = os.path.join('vasilisk', 'coverage')
+        self.coverage_dir = os.path.join('/dev/shm', 'vasilisk_coverage')
+        if not os.path.exists(self.coverage_dir):
+            self.logger.info('creating coverage dir')
+            os.makedirs(self.tests)
+
 
         if turbo_coverage:
             self.coverage = coverage.turbo.TurboCoverage()
@@ -104,7 +108,9 @@ class Vasilisk:
 
     def generate(self):
         while not self.queue.full():
-            self.queue.put(self.fuzzer.generate())
+            a = self.fuzzer.generate()
+            print(a)
+            self.queue.put(a)
 
     def start(self):
         self.logger.info('my pid is {}'.format(os.getpid()))

@@ -1,0 +1,46 @@
+%%% LanguageConstructs API
+
+%const% VARIANCE_MAX := 1
+%const% VARIANCE_TEMPLATE := "function f(){%s} %%DebugPrint(f()); %%OptimizeFunctionOnNextCall(f); %%DebugPrint(f());"
+%const% MAX_REPEAT_POWER := 1
+
+%section% := value
+
+%%% ###########################################################################
+
+VAR_NAME := 
+    tmp
+
+VAR_DECLARATION := 
+    var +VAR_NAME+
+
+assignment := 
+	+VAR_NAME+ = +common:object+;
+
+if_stmnt :=
+	if (+common:bool+) { +assignment+ }
+
+if_else_stmnt :=
+    if (+common:bool+) { +assignment+ } else { +if_stmnt+ }
+
+return_stmt :=
+    return +VAR_NAME+;
+
+print_stmt :=
+    console.log(+VAR_NAME+);
+
+if_else_ret :=
+    +if_else_stmnt+\n+return_stmt+
+
+custom_data_class := 
+   "    " 
+    
+
+LanguageConstructs :=
+    +if_else_ret+
+
+%%% ###########################################################################
+
+%section% := variance
+main :=
+    +LanguageConstructs+

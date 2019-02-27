@@ -17,7 +17,7 @@ class DharmaFuzzer(BaseFuzzer):
         ), 'r')
         grammars = [open(os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            '..', 'grammars', 'canvas2d.dg'
+            '..', 'grammars', 'semantics.dg'
         ), 'r')]
 
         self.dharma = dharma.DharmaMachine()
