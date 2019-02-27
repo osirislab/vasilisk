@@ -2,6 +2,6 @@ function f(x, y) {
   return x + y;
 }
 
-f("Hello ", "World");
+f("Hello", "World");
 %OptimizeFunctionOnNextCall(f);
-f("Hello ", "World");
+f("Hello", "World");
