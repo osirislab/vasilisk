@@ -17,7 +17,7 @@ import fuzzers
 
 class Vasilisk:
     def __init__(self, fuzzer, d8, procs, count,
-                 crashes, tests, debug, turbo_coverage):
+                 crashes, tests, debug, coverage):
         self.logger = logging.getLogger(__name__)
         self.crashes = crashes
         self.tests = tests
@@ -32,14 +32,20 @@ class Vasilisk:
             self.logger.info('creating coverage dir')
             os.makedirs(self.coverage_dir)
 
-        if turbo_coverage:
+        if coverage:
             self.coverage = turbo.TurboCoverage()
 
-        self.count = count
-        self.queue = JoinableQueue(self.count)
         self.procs = procs
+        self.rate_limit = 1000 * self.procs
+        self.count = count
+
+        self.iterations = 1
+        while self.count > self.rate_limit:
+            self.iterations += 1
+            self.count //= 2
+
+        self.queue = JoinableQueue(self.count)
         self.threads = []
-        self.rate_limit = 100000
 
         if not os.path.exists(self.crashes):
             self.logger.error('crashes folder does not exist')
@@ -107,7 +113,7 @@ class Vasilisk:
                 unique_id = str(uuid.uuid4()) + '_' + curr_time
                 self.create_test(test_case, unique_id)
 
-            output = self.execute(test_case.strip(), coverage_path, unique_id)
+            output = self.execute(test_case, coverage_path, unique_id)
 
             if not self.fuzzer.validate(output):
                 self.commit_test(test_case, unique_id)
@@ -120,8 +126,6 @@ class Vasilisk:
 
     def generate(self):
         while not self.queue.full():
-            if self.queue.qsize() >= self.rate_limit:
-                time.sleep(30)
             a = self.fuzzer.generate()
             self.logger.debug(a)
             self.logger.debug('-' * 50)
@@ -147,12 +151,21 @@ class Vasilisk:
             t.start()
             self.threads.append(t)
 
-        self.generate()
-        self.logger.info('generated all cases')
+        for _ in range(self.iterations):
+            batch_start = time.time()
 
-        self.queue.join()
+            self.generate()
+            self.logger.info('generated batch of cases')
 
-        self.logger.info('processed all cases')
+            self.queue.join()
+
+            self.logger.info('processed batch of cases')
+
+            batch_end = time.time()
+
+            self.logger.info('finished {} cases in {} seconds'.format(
+                             self.count,
+                             batch_end - batch_start))
 
         for _ in range(self.procs):
             self.queue.put(None)
@@ -163,7 +176,7 @@ class Vasilisk:
         end_time = time.time()
 
         self.logger.info('finished {} cases in {} seconds'.format(
-                         self.count,
+                         self.count * self.iterations,
                          end_time - start_time))
 
 
@@ -187,15 +200,14 @@ class Vasilisk:
               help='track coverage for turbo optimizations')
 @click.option('--verbose', is_flag=True, default=False,
               help='print more stuff')
-def main(fuzzer, d8, procs, count, crashes, tests, debug, turbo_coverage,
-         verbose):
+def main(fuzzer, d8, procs, count, crashes, tests, debug, coverage, verbose):
     if verbose:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
     driver = Vasilisk(
-        fuzzer, d8, procs, count, crashes, tests, debug, turbo_coverage
+        fuzzer, d8, procs, count, crashes, tests, debug, coverage
     )
     driver.start()
 
