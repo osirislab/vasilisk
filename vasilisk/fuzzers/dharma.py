@@ -15,10 +15,16 @@ class DharmaFuzzer(BaseFuzzer):
             os.path.dirname(os.path.abspath(dharma.__file__)),
             'settings.py'
         ), 'r')
-        grammars = [open(os.path.join(
+
+        grammar_folder = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            '..', 'grammars', 'semantics.dg'
-        ), 'r')]
+            '..', 'grammars'
+        )
+
+        grammars = [
+            open(os.path.join(grammar_folder, 'semantics.dg'), 'r'),
+            open(os.path.join(grammar_folder, 'grammar.dg'), 'r')
+        ]
 
         self.dharma = dharma.DharmaMachine()
         self.dharma.process_settings(settings)
@@ -27,7 +33,7 @@ class DharmaFuzzer(BaseFuzzer):
         settings.close()
 
     def generate(self):
-        return self.dharma.generate_content()
+        return self.dharma.generate_content().strip()
 
     def validate(self, output):
         return True

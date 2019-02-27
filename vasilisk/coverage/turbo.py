@@ -8,8 +8,6 @@ class TurboCoverage(object):
                                  decode_responses=True)
         self.optimizations = self.redis.hgetall('optimizations')
         self.combinations = set(self.redis.smembers('combinations'))
-        print(self.optimizations)
-        print(self.combinations)
         self.misses = 0
 
     def parse(self, turbo_json):
@@ -31,7 +29,7 @@ class TurboCoverage(object):
         combination = []
         for node in nodes:
             if node['id'] in control_ids:
-                title = str(node['title'])
+                title = str(node['opcode'])
                 control.append(title)
                 if title not in self.optimizations:
                     id = str(len(self.optimizations))
@@ -54,4 +52,7 @@ class TurboCoverage(object):
 
 if __name__ == '__main__':
     opt = TurboCoverage()
-    print(opt.parse('turbo-f-0.json'))
+    print(opt.optimizations)
+    print(opt.combinations)
+    print(f'{len(opt.optimizations)} unique nodes encountered')
+    print(f'{len(opt.combinations)} unique node combinations encountered')

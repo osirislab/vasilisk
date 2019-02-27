@@ -1,19 +1,20 @@
+import logging
+
 from .dharma import DharmaFuzzer
 
 
 class OptimizeFuzzer(DharmaFuzzer):
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
         super().__init__()
 
     def generate(self):
         """Expects only function named f"""
         input = super().generate()
-        input += '\nprint(f());'
-        input += '\n%OptimizeFunctionOnNextCall(f);'
-        input += '\nprint("optimized output:");'
-        input += '\nprint(f());'
         return input
 
     def validate(self, output):
-        values = output.split(b'optimized output:\n')
-        return values[0] == values[1]
+        # values = output.split(b'optimized:\n')
+        self.logger.debug(output)
+        # return values[0] == values[1]
+        return True

@@ -2,42 +2,38 @@
 
 %const% VARIANCE_MAX := 1
 %const% VARIANCE_TEMPLATE := "function f(){%s} %%DebugPrint(f()); %%OptimizeFunctionOnNextCall(f); %%DebugPrint(f());"
-%const% MAX_REPEAT_POWER := 1
+%const% MAX_REPEAT_POWER := 4
 
 %section% := value
 
 %%% ###########################################################################
 
-VAR_NAME := 
-    tmp
+VAR_NAME :=
+  tmp
 
-VAR_DECLARATION := 
-    var +VAR_NAME+
+VAR_DECLARATION :=
+  var +VAR_NAME+;
 
-assignment := 
-	+VAR_NAME+ = +common:object+;
+assignment :=
+	+VAR_NAME+ = +grammar:math+;
 
 if_stmnt :=
 	if (+common:bool+) { +assignment+ }
 
 if_else_stmnt :=
-    if (+common:bool+) { +assignment+ } else { +if_stmnt+ }
+  if (+common:bool+) { +assignment+ } else { +if_stmnt+ }
 
 return_stmt :=
     return +VAR_NAME+;
 
-print_stmt :=
-    console.log(+VAR_NAME+);
-
 if_else_ret :=
-    +if_else_stmnt+\n+return_stmt+
+    +if_else_stmnt++return_stmt+
 
-custom_data_class := 
-   "    " 
-    
+custom_data_class :=
+   "    "
 
 LanguageConstructs :=
-    +if_else_ret+
+    +VAR_DECLARATION++if_else_ret+
 
 %%% ###########################################################################
 

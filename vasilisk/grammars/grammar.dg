@@ -1,0 +1,19 @@
+%section% := value
+
+array :=
+	[+arrayvalues+]
+
+arrayvalues :=
+	%repeat%(+common:int+, ", ")
+	%repeat%(+common:short_int+, ", ")
+	%repeat%(+common:intoverflow+, ", ")
+	%repeat%(+common:byte+, ", ")
+
+string :=
+	'+common:text+'
+
+math :=
+  +common:int+ +common:sign+ +common:int+
+  +string+ +common:sign+ +common:int+
+  +string+ +common:sign+ +string+
+  +array+ +common:sign+ +array+

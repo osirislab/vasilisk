@@ -11,12 +11,12 @@ import click
 from datetime import datetime
 from multiprocessing import Process, JoinableQueue
 
-import coverage
+from coverage import turbo
 import fuzzers
 
 
 class Vasilisk:
-    def __init__(self, fuzzer, d8, procs, iterations,
+    def __init__(self, fuzzer, d8, procs, count,
                  crashes, tests, debug, turbo_coverage):
         self.logger = logging.getLogger(__name__)
         self.crashes = crashes
@@ -30,14 +30,13 @@ class Vasilisk:
         self.coverage_dir = os.path.join('/dev/shm', 'vasilisk_coverage')
         if not os.path.exists(self.coverage_dir):
             self.logger.info('creating coverage dir')
-            os.makedirs(self.tests)
-
+            os.makedirs(self.coverage_dir)
 
         if turbo_coverage:
-            self.coverage = coverage.turbo.TurboCoverage()
+            self.coverage = turbo.TurboCoverage()
 
-        self.iterations = iterations
-        self.queue = JoinableQueue(self.iterations)
+        self.count = count
+        self.queue = JoinableQueue(self.count)
         self.procs = procs
         self.threads = []
 
@@ -53,8 +52,16 @@ class Vasilisk:
         with open(os.path.join(self.tests, file_name), 'w+') as f:
             f.write(test_case)
 
-    def commit_test(self, test_case, file_name):
+    def commit_test(self, test_case, unique_id=None):
         """Test case valuable, save to logs"""
+        self.logger.info('found fuzzing target')
+
+        if unique_id is None:
+            unique_id = uuid.uuid4()
+
+        curr_time = datetime.now().strftime('%Y.%m.%d-%H:%M:%S')
+        file_name = str(unique_id) + curr_time
+
         case_folder = os.path.join(self.crashes, file_name)
 
         if os.path.exists(case_folder):
@@ -67,14 +74,23 @@ class Vasilisk:
         with open(dest, 'w+') as f:
             f.write(test_case)
 
-    def execute(self, test_case, coverage_path=None):
+    def execute(self, test_case, coverage_path=None, unique_id=None):
         options = ['-e', '--allow-natives-syntax']
         if self.coverage:
             options.append('--trace-turbo')
-            options.append('--trace-turbo-path {}'.format(coverage))
-        return subprocess.check_output(
-            [self.d8] + options + [test_case]
-        )
+            options.append('--trace-turbo-path')
+            options.append('{}'.format(coverage_path))
+
+        try:
+            output = subprocess.check_output(
+                [self.d8] + options + [test_case]
+            )
+        except subprocess.CalledProcessError as e:
+            self.commit_test(test_case, unique_id)
+            self.logger.error(e)
+            return None
+
+        return output
 
     def fuzz(self, coverage_path=None):
         while True:
@@ -83,33 +99,29 @@ class Vasilisk:
             if test_case is None:
                 break
 
-            file_name = ''
+            unique_id = None
 
             if self.debug:
                 curr_time = datetime.now().strftime('%Y.%m.%d-%H:%M:%S')
-                file_name = str(uuid.uuid4()) + '_' + curr_time
-                self.create_test(test_case, file_name)
+                unique_id = str(uuid.uuid4()) + '_' + curr_time
+                self.create_test(test_case, unique_id)
 
-            output = self.execute(test_case, coverage_path)
+            output = self.execute(test_case, coverage_path, unique_id)
 
             if not self.fuzzer.validate(output):
-                self.logger.info('found fuzzing target')
-
-                if not file_name:
-                    curr_time = datetime.now().strftime('%Y.%m.%d-%H:%M:%S')
-                    file_name = str(uuid.uuid4()) + curr_time
-
-                self.commit_test(test_case, file_name)
+                self.commit_test(test_case, unique_id)
 
             if self.coverage:
-                print(self.coverage.parse())
+                turbo_json = os.path.join(coverage_path, 'turbo-f-0.json')
+                self.logger.debug(self.coverage.parse(turbo_json))
 
             self.queue.task_done()
 
     def generate(self):
         while not self.queue.full():
             a = self.fuzzer.generate()
-            print(a)
+            self.logger.debug(a)
+            self.logger.debug('-' * 50)
             self.queue.put(a)
 
     def start(self):
@@ -148,7 +160,7 @@ class Vasilisk:
         end_time = time.time()
 
         self.logger.info('finished {} cases in {} seconds'.format(
-                         self.iterations,
+                         self.count,
                          end_time - start_time))
 
 
@@ -160,7 +172,7 @@ class Vasilisk:
               help='location of d8 executable. defaults to value stored \
               in D8_PATH environment variable')
 @click.option('--procs', default=8, help='worker processes to create')
-@click.option('--iterations', default=1000, help='number of iterations')
+@click.option('--count', default=10, help='number of iterations')
 @click.option('--crashes', default='./crashes',
               help='where to store crash findings')
 @click.option('--tests', default='/tmp/vasilisk/tests',
@@ -170,14 +182,17 @@ class Vasilisk:
               test inputs to specified test folder')
 @click.option('--turbo-coverage', is_flag=True, default=False,
               help='track coverage for turbo optimizations')
-def main(fuzzer, d8, procs, iterations, crashes, tests, debug, turbo_coverage):
-    if debug:
+@click.option('--verbose', is_flag=True, default=False,
+              help='print more stuff')
+def main(fuzzer, d8, procs, count, crashes, tests, debug, turbo_coverage,
+         verbose):
+    if verbose:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
 
     driver = Vasilisk(
-        fuzzer, d8, procs, iterations, crashes, tests, debug, turbo_coverage
+        fuzzer, d8, procs, count, crashes, tests, debug, turbo_coverage
     )
     driver.start()
 
