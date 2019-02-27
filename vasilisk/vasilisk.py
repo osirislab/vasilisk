@@ -39,6 +39,7 @@ class Vasilisk:
         self.queue = JoinableQueue(self.count)
         self.procs = procs
         self.threads = []
+        self.rate_limit = 100000
 
         if not os.path.exists(self.crashes):
             self.logger.error('crashes folder does not exist')
@@ -119,6 +120,8 @@ class Vasilisk:
 
     def generate(self):
         while not self.queue.full():
+            if self.queue.qsize() >= self.rate_limit:
+                time.sleep(30)
             a = self.fuzzer.generate()
             self.logger.debug(a)
             self.logger.debug('-' * 50)
@@ -180,7 +183,7 @@ class Vasilisk:
 @click.option('--debug', is_flag=True, default=False,
               help='debug mode turns on more debug messages and stores all \
               test inputs to specified test folder')
-@click.option('--turbo-coverage', is_flag=True, default=False,
+@click.option('--coverage', is_flag=True, default=False,
               help='track coverage for turbo optimizations')
 @click.option('--verbose', is_flag=True, default=False,
               help='print more stuff')
