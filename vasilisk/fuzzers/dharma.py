@@ -23,7 +23,8 @@ class DharmaFuzzer(BaseFuzzer):
 
         grammars = [
             open(os.path.join(grammar_folder, 'semantics.dg'), 'r'),
-            open(os.path.join(grammar_folder, 'grammar.dg'), 'r')
+            open(os.path.join(grammar_folder, 'grammar.dg'), 'r'),
+            open(os.path.join(grammar_folder, 'ecma1.dg'), 'r')
         ]
 
         self.dharma = dharma.DharmaMachine()

@@ -1,0 +1,71 @@
+%%% LanguageConstructs API
+
+%const% VARIANCE_MAX := 1
+%const% VARIANCE_TEMPLATE := "function f(){%s} %%DebugPrint(f()); %%OptimizeFunctionOnNextCall(f); %%DebugPrint(f());"
+%const% MAX_REPEAT_POWER := 4
+
+%section% := value
+
+%%% ###########################################################################
+
+weird_type := 
+    null
+    undefined
+    NaN
+
+symbol :=
+    Symbol( %repeat%(+common:object+, ", ") )
+
+numParsing := 
+    parseInt(+grammar:intArgs+)
+    parseFloat(+grammar:intArgs+)
+    parseInt(+grammar:builtinMath+)
+    parseFloat(+grammar:builtinMath+)
+    parseInt(+weird_type+)
+    parseFloat(+weird_type+)
+
+conditionalOR :=
+   ( (+common:bool+) || (+common:bool+) )
+
+assignmentOperator := 
+    *= 
+    /="
+    %=
+    +=
+    -=
+    <<=
+    >>=
+    >>>=
+    &=
+    ^=
+    |=
+
+setAvailableVars :=
+    var a; var b; var c; var d; var e; var f;
+
+availableVars := 
+    a
+    b
+    c
+    d
+    e
+    f
+
+assignmentExpr :=
+    +conditionalExpr+
+    +availableVars = +assignmentExpr+
+    +availableVars+ +assignmentOperator+ +assignmentExpr+
+
+conditionalExpr :=
+    +conditionalOR+
+    +conditionalOR+ ? +assignmentExpr+ : +assignmentExpr+
+
+Expression := 
+    +assignmentExpr+
+    +Expression+ +assignmentExpr+
+
+%%% ###########################################################################
+
+%section% := variance
+main := 
+    +setAvailableVars+ +Expression+; return +weird_type+

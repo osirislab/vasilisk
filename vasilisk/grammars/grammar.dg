@@ -17,3 +17,70 @@ math :=
   +string+ +common:sign+ +common:int+
   +string+ +common:sign+ +string+
   +array+ +common:sign+ +array+
+
+negative_number :=
+    -+common:positive_integer+
+
+intArgs :=
+    null
+    undefined
+    NaN
+    +negative_number+
+    +common:integer+
+    +common:bad_number+
+    +common:decimal_number+
+    +common:scientific_number+
+    +common:hex+
+    +common:byte+
+
+builtinMath :=
+    Math.PI
+    Math.E
+    Math.LN10
+    Math.LN2
+    Math.LOG10E
+    MATH.LOG2E
+    MATH.SQRT1_2
+    Math.abs( %repeat%(+intArgs+, ", ") )
+    Math.acos( %repeat%(+intArgs+, ", ") )
+    Math.acosh( %repeat%(+intArgs+, ", ") )
+    Math.asin( %repeat%(+intArgs+, ", ") )
+    Math.asinh( %repeat%(+intArgs+, ", ") )
+    Math.atan( %repeat%(+intArgs+, ", ") )
+    Math.atan2( %repeat%(+intArgs+, ", ") )
+    Math.atanh( %repeat%(+intArgs+, ", ") )
+    Math.cbrt( %repeat%(+intArgs+, ", ") )
+    Math.ceil( %repeat%(+intArgs+, ", ") )
+    Math.clz32( %repeat%(+intArgs+, ", ") )
+    Math.constructor( %repeat%(+intArgs+, ", ") )
+    Math.cos( %repeat%(+intArgs+, ", ") )
+    Math.cosh( %repeat%(+intArgs+, ", ") )
+    Math.exp( %repeat%(+intArgs+, ", ") )
+    Math.expm1( %repeat%(+intArgs+, ", ") )
+    Math.floor( %repeat%(+intArgs+, ", ") )
+    Math.fround( %repeat%(+intArgs+, ", ") )
+    Math.hasOwnProperty( %repeat%(+intArgs+, ", ") )
+    Math.hypot( %repeat%(+intArgs+, ", ") )
+    Math.imul( %repeat%(+intArgs+, ", ") )
+    Math.isPrototypeOf( %repeat%(+intArgs+, ", ") )
+    Math.log( %repeat%(+intArgs+, ", ") )
+    Math.log10( %repeat%(+intArgs+, ", ") )
+    Math.log1p( %repeat%(+intArgs+, ", ") )
+    Math.log2( %repeat%(+intArgs+, ", ") )
+    Math.max( %repeat%(+intArgs+, ", ") )
+    Math.min( %repeat%(+intArgs+, ", ") )
+    Math.pow( %repeat%(+intArgs+, ", ") )
+    Math.propertyIsEnumerable( %repeat%(+intArgs+, ", ") )
+    Math.random( %repeat%(+intArgs+, ", ") )
+    Math.round( %repeat%(+intArgs+, ", ") )
+    Math.sign( %repeat%(+intArgs+, ", ") )
+    Math.sin( %repeat%(+intArgs+, ", ") )
+    Math.sinh( %repeat%(+intArgs+, ", ") )
+    Math.sqrt( %repeat%(+intArgs+, ", ") )
+    Math.tan( %repeat%(+intArgs+, ", ") )
+    Math.tanh( %repeat%(+intArgs+, ", ") )
+    Math.toLocaleString( %repeat%(+intArgs+, ", ") )
+    Math.toSource( %repeat%(+intArgs+, ", ") )
+    Math.toString( %repeat%(+intArgs+, ", ") )
+    Math.trunc( %repeat%(+intArgs+, ", ") )
+    Math.valueOf( %repeat%(+intArgs+, ", ") )
