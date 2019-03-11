@@ -1,0 +1,21 @@
+%section% := value
+
+string :=
+	'+common:text+'
+
+math :=
+  +common:int+ +common:sign+ +common:int+
+	+string+ +common:sign+ +common:int+
+  +string+ +common:sign+ +string+
+  +array+ +common:sign+ +array+
+
+negative_number :=
+    -+common:positive_integer+
+
+intArgs :=
+    null
+
+builtinMath :=
+    Math.PI
+    Math.E
+		Math.LN2

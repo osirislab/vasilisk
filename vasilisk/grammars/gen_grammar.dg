@@ -1,0 +1,15 @@
+%%% Generated Grammar
+%const% VARIANCE_MAX := 1
+%const% VARIANCE_TEMPLATE := "function f(){%s} %%DebugPrint(f()); %%OptimizeFunctionOnNextCall(f); %%DebugPrint(f());"
+%const% MAX_REPEAT_POWER := 4
+
+%section% := value
+
+value :=
+	+string+ +common:sign+ +common:int+
+
+%section% := variance
+
+variance :=
+	+VAR_DECLARATION++if_else_ret+
+
