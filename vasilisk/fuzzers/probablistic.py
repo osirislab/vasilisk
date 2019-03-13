@@ -1,23 +1,36 @@
+import datetime
 import logging
+import os
 import subprocess
 import uuid
 
-from datetime import datetime
+from coverage import turbo
 
 from .base import BaseFuzzer
 
 
-class OptimizeFuzzer(BaseFuzzer):
-    def __init__(self, thread, d8, crashes, tests, debug):
+class ProbablisticFuzzer(BaseFuzzer):
+    def __init__(self, thread, crashes, tests):
         self.logger = logging.getLogger(__name__)
 
-        self.d8 = d8
         self.crashes = crashes
         self.tests = tests
-        self.debug = debug
+
+        coverage_dir = os.path.join('/dev/shm', 'vasilisk_coverage')
+        if not os.path.exists(coverage_dir):
+            self.logger.info('creating coverage dir')
+            os.makedirs(coverage_dir)
+
+        self.coverage_path = os.path.join(coverage_dir, str(thread))
+        if not os.path.exists(self.coverage_path):
+            self.logger.info('creating thread specific coverage dir')
+            os.makedirs(self.coverage_path)
+
+        self.coverage = turbo.TurboCoverage()
 
     def execute(self, test_case):
-        options = ['-e', '--allow-natives-syntax']
+        options = ['-e', '--allow-natives-syntax', '--trace-turbo',
+                   '--trace-turbo-path', self.coverage_path]
 
         try:
             return subprocess.check_output([self.d8] + options + [test_case])
@@ -43,7 +56,4 @@ class OptimizeFuzzer(BaseFuzzer):
             self.commit_test(test_case, unique_id)
 
     def validate(self, output):
-        # values = output.split(b'optimized:\n')
-        self.logger.debug(output)
-        # return values[0] == values[1]
         return True

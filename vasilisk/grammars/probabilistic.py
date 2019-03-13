@@ -4,17 +4,27 @@ import os
 import random
 import sys
 
+from .dharma import DharmaGrammar
 
-class Grammar():
+
+class ProbabilisticGrammar(DharmaGrammar):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
+        grammar_dir = os.path.join('/dev/shm', 'vasilisk_grammar')
+        if not os.path.exists(grammar_dir):
+            self.logger.info('creating coverage dir')
+            os.makedirs(grammar_dir)
+
+        self.grammar_path = os.path.join(grammar_dir, 'gen_grammar.dg')
+
         current_dir = os.path.dirname(os.path.realpath(__file__))
         templates = os.path.join(current_dir, 'templates')
-        self.gen_grammar_path = os.path.join(current_dir, 'gen_grammar.dg')
         self.values = self.parse(os.path.join(templates, 'values.dg'))
         # self.variables = self.parse(os.path.join(templates, 'variables.dg'))
         self.variances = self.parse(os.path.join(templates, 'variances.dg'))
+
+        super().__init__([self.grammar_path])
 
     def parse(self, grammar_path):
         with open(grammar_path, 'r') as f:
@@ -52,15 +62,22 @@ class Grammar():
         headers = [
             '%%% Generated Grammar',
             '%const% VARIANCE_MAX := 1',
-            '%const% VARIANCE_TEMPLATE := "function f(){%s} %%DebugPrint(f()); %%OptimizeFunctionOnNextCall(f); %%DebugPrint(f());"',
+            '%const% VARIANCE_TEMPLATE := "function f(){%s} %%DebugPrint(f());'
+            '%%OptimizeFunctionOnNextCall(f); %%DebugPrint(f());"',
             '%const% MAX_REPEAT_POWER := 4'
         ]
 
-        with open(self.gen_grammar_path, 'w') as f:
+        with open(self.grammar_path, 'w') as f:
             for header in headers:
                 f.write(header + '\n')
 
             f.write('\n')
+
+        variance = self.choice(variances)
+
+        with open(self.grammar_path, 'a') as f:
+            f.write('%section% := variance\n\n')
+            f.write(f'variance :=\n\t{self.variances[variance][0]}\n\n')
 
         value = self.choice(values)
         index = 0
@@ -69,7 +86,7 @@ class Grammar():
             value = split[0]
             index = int(split[1])
 
-        with open(self.gen_grammar_path, 'a') as f:
+        with open(self.grammar_path, 'a') as f:
             f.write('%section% := value\n\n')
             f.write(f'value :=\n\t{self.values[value][index]}\n\n')
 
@@ -79,15 +96,11 @@ class Grammar():
         #     f.write('%section := variable\n\n')
         #     f.write(f'{variable} :=\n\t{self.variables[variable]}\n\n')
 
-        variance = self.choice(variances)
-
-        with open(self.gen_grammar_path, 'a') as f:
-            f.write('%section% := variance\n\n')
-            f.write(f'variance :=\n\t{self.variances[variance][0]}\n\n')
+        return super().generate()
 
 
 if __name__ == '__main__':
-    g = Grammar()
+    g = ProbabilisticGrammar()
     values = {
         'builtinMath:0': 10,
         'builtinMath:1': 10,
