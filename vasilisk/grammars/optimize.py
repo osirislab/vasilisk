@@ -1,7 +1,7 @@
 import logging
 import os
 
-from .dharma import DharmaGrammar
+from .dharma_grammar import DharmaGrammar
 
 
 class OptimizeGrammar(DharmaGrammar):

@@ -8,51 +8,53 @@ class TurboCoverage(object):
                                  decode_responses=True)
         self.optimizations = self.redis.hgetall('optimizations')
         self.combinations = set(self.redis.smembers('combinations'))
-        self.misses = 0
 
     def parse(self, turbo_json):
         with open(turbo_json, 'r') as f:
             turbo = json.loads(f.read())
 
-        bytecode = turbo['phases'][0]['data']
-        nodes = bytecode['nodes']
-        edges = bytecode['edges']
+        skip = ['before register allocation', 'after register allocation',
+                'schedule', 'effect linearization schedule',
+                'select instructions', 'code generation', 'disassembly']
 
-        control_ids = set([])
+        filtered = {}
+        for phase in turbo['phases']:
+            name = phase['name']
+            if name not in skip:
+                filtered[name] = {}
+                for node in phase['data']['nodes']:
+                    filtered[name][str(node['id'])] = node['title']
 
-        for edge in edges:
-            if edge['type'] == 'control':
-                control_ids.add(edge['source'])
-                control_ids.add(edge['target'])
+        return filtered
 
-        control = []
-        combination = []
-        for node in nodes:
-            if node['id'] in control_ids:
-                title = str(node['opcode'])
-                control.append(title)
-                if title not in self.optimizations:
-                    id = str(len(self.optimizations))
-                    self.optimizations[title] = id
-                    self.redis.hset('optimizations', title, id)
+    def metrics(self, turbo_json):
+        turbo = self.parse(turbo_json)
 
-                combination.append(self.optimizations[title])
+        differences = {}
+        prev = {}
+        for phase, nodes in turbo.items():
+            if prev:
+                differences[phase] = {'changes': 0,
+                                      'additions': 0,
+                                      'deletions': 0}
+                for id, title in nodes.items():
+                    if id not in prev:
+                        differences[phase]['additions'] += 1
+                    elif title != prev[id]:
+                        differences[phase]['changes'] += 1
 
-        combination = ','.join(combination)
+                for id in prev.keys():
+                    if id not in nodes:
+                        differences[phase]['deletions'] += 1
 
-        if combination not in self.combinations:
-            self.combinations.add(combination)
-            self.redis.sadd('combinations', combination)
-            self.misses = 0
-        else:
-            self.misses += 1
+            prev = nodes
 
-        return control
+        return differences
+
+    def record(self, grammar):
+        print(grammar)
 
 
 if __name__ == '__main__':
     opt = TurboCoverage()
-    print(opt.optimizations)
-    print(opt.combinations)
-    print(f'{len(opt.optimizations)} unique nodes encountered')
-    print(f'{len(opt.combinations)} unique node combinations encountered')
+    print(opt.metrics('/dev/shm/vasilisk_coverage/thread1/turbo-f-0.json'))

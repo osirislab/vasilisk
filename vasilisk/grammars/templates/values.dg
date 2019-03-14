@@ -1,13 +1,11 @@
-%section% := value
-
 string :=
 	'+common:text+'
 
 math :=
   +common:int+ +common:sign+ +common:int+
-	+string+ +common:sign+ +common:int+
-  +string+ +common:sign+ +string+
-  +array+ +common:sign+ +array+
+	'+common:text+' +common:sign+ +common:int+
+  '+common:text+'+ +common:sign+ '+common:text+'
+  '+common:text+' +common:sign+ '+common:text+'
 
 negative_number :=
     -+common:positive_integer+
