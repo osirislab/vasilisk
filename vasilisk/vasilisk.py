@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import logging
 import os
-import sys
 import time
 
 import click
@@ -22,21 +21,21 @@ class Vasilisk:
         self.rate_limit = min(1000 * self.procs, self.count)
         self.generated = 0
 
-        self.fuzzers = [
-            fuzzers.fuzzers[fuzzer](thread, d8, crashes, tests, debug)
-            for thread in range(self.procs)
-        ]
         self.grammar = grammars.grammars[fuzzer]()
+        self.fuzzer = fuzzers.fuzzers[fuzzer](
+            procs, d8, self.grammar, crashes, tests, debug
+        )
 
         self.queue = JoinableQueue(self.rate_limit)
 
         self.threads = []
 
         if not os.path.exists(crashes):
-            self.logger.error('crashes folder does not exist')
-            sys.exit(1)
+            self.logger.info('creating crashes folder')
+            os.makedirs(crashes)
 
         if not os.path.exists(tests):
+            self.logger.info('creating tests folder')
             os.makedirs(tests)
 
     def generate(self):
@@ -55,7 +54,7 @@ class Vasilisk:
             if test_case is None:
                 break
 
-            self.fuzzers[thread].fuzz(test_case)
+            self.fuzzer.fuzz(test_case, thread)
 
             self.queue.task_done()
 
@@ -89,7 +88,7 @@ class Vasilisk:
 @click.command()
 @click.option('--fuzzer', required=True,
               type=click.Choice(fuzzers.fuzzers.keys()),
-              default='optimize',
+              default='probabilistic',
               help='which fuzzer to use. differences in README')
 @click.option('--d8', envvar='D8_PATH',
               help='location of d8 executable. defaults to value stored \

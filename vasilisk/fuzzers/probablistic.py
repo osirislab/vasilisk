@@ -10,7 +10,7 @@ from .base import BaseFuzzer
 
 
 class ProbablisticFuzzer(BaseFuzzer):
-    def __init__(self, thread, d8, crashes, tests, debug):
+    def __init__(self, threads, d8, grammar, crashes, tests, debug):
         self.logger = logging.getLogger(__name__)
 
         self.d8 = d8
@@ -23,18 +23,30 @@ class ProbablisticFuzzer(BaseFuzzer):
             self.logger.info('creating coverage dir')
             os.makedirs(coverage_dir)
 
-        self.coverage_path = os.path.join(
-            coverage_dir, 'thread-{}'.format(thread)
-        )
-        if not os.path.exists(self.coverage_path):
-            self.logger.info('creating thread specific coverage dir')
-            os.makedirs(self.coverage_path)
+        self.coverage_paths = []
+        for thread in range(threads):
+            coverage_path = os.path.join(
+                coverage_dir, 'thread-{}'.format(thread)
+            )
+            self.coverage_paths.append(coverage_path)
+
+            if not os.path.exists(coverage_path):
+                self.logger.info('creating thread specific coverage dir')
+                os.makedirs(coverage_path)
 
         self.coverage = turbo.TurboCoverage()
+        self.grammar = grammar
+        self.coverage.scan_values(self.grammar.values)
+        self.coverage.scan_variances(self.grammar.variances)
 
-    def execute(self, test_case):
+        self.grammar.load_probabilities(
+            self.coverage.get_values(),
+            self.coverage.get_variances()
+        )
+
+    def execute(self, test_case, thread):
         options = ['-e', '--allow-natives-syntax', '--trace-turbo',
-                   '--trace-turbo-path', self.coverage_path]
+                   '--trace-turbo-path', self.coverage_paths[thread]]
 
         try:
             return subprocess.check_output([self.d8] + options + [test_case])
@@ -42,7 +54,7 @@ class ProbablisticFuzzer(BaseFuzzer):
             self.logger.error(e)
             return None
 
-    def fuzz(self, test_case):
+    def fuzz(self, test_case, thread):
         unique_id = None
         grammar, test_case = test_case
 
@@ -51,7 +63,7 @@ class ProbablisticFuzzer(BaseFuzzer):
             unique_id = str(uuid.uuid4()) + '_' + curr_time
             self.create_test(test_case, unique_id)
 
-        output = self.execute(test_case)
+        output = self.execute(test_case, thread)
 
         if not self.validate(output):
             if unique_id is None:
@@ -60,7 +72,7 @@ class ProbablisticFuzzer(BaseFuzzer):
 
             self.commit_test(test_case, unique_id)
 
-        self.coverage.record(grammar)
+        self.coverage.record(grammar, self.coverage_paths[thread])
 
     def validate(self, output):
         return True

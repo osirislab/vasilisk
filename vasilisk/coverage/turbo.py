@@ -1,4 +1,5 @@
 import json
+import os
 import redis
 
 
@@ -6,8 +7,44 @@ class TurboCoverage(object):
     def __init__(self):
         self.redis = redis.Redis(host='localhost', port=6379, db=0,
                                  decode_responses=True)
-        self.optimizations = self.redis.hgetall('optimizations')
-        self.combinations = set(self.redis.smembers('combinations'))
+
+        if not self.redis.exists('count'):
+            self.redis.set('count', 0)
+
+        if not self.redis.exists('average'):
+            self.redis.set('average', 0)
+
+        self.count = int(self.redis.get('count'))
+        self.average = float(self.redis.get('average'))
+        self.cumulative_total = float(self.average * self.count)
+
+    def scan_values(self, grammar):
+        for rule in grammar.keys():
+            if not self.redis.exists('value:' + rule):
+                self.redis.set('value:' + rule, 10)
+
+    def scan_variances(self, grammar):
+        for rule in grammar.keys():
+            if not self.redis.exists('variance:' + rule):
+                self.redis.set('variance:' + rule, 10)
+
+    def get_values(self):
+        values = self.redis.scan(match='value:*')[1]
+        probabilities = {}
+        for value in values:
+            rule = value.split('value:')[1]
+            probabilities[rule] = int(self.redis.get(value))
+
+        return probabilities
+
+    def get_variances(self):
+        variances = self.redis.scan(match='variance:*')[1]
+        probabilities = {}
+        for variance in variances:
+            rule = variance.split('variance:')[1]
+            probabilities[rule] = int(self.redis.get(variance))
+
+        return probabilities
 
     def parse(self, turbo_json):
         with open(turbo_json, 'r') as f:
@@ -51,10 +88,43 @@ class TurboCoverage(object):
 
         return differences
 
-    def record(self, grammar):
-        print(grammar)
+    def record(self, grammar, turbo_path):
+        turbo_json = os.path.join(turbo_path, 'turbo-f-0.json')
+        total = 0
+        for changes in self.metrics(turbo_json).values():
+            total += sum(changes.values())
+
+        case = 'case:' + ','.join(grammar)
+        if not self.redis.exists(case):
+            self.redis.set(case, total)
+            self.redis.incr('count')
+            self.count += 1
+            self.cumulative_total += total
+            self.redis.set('average', self.cumulative_total / self.count)
+
+    def print_records(self):
+        print(f'{self.redis.get("count")} cases processed')
+        print(f'{self.redis.get("average")} average changes')
+
+        print('-' * 80)
+        print('processed cases:')
+        cases = self.redis.keys(pattern='case:*')
+        for case in cases:
+            print(case.split('case:')[1].split(','), self.redis.get(case))
+
+        print('-' * 80)
+        print('scores for values:')
+        values = self.redis.keys(pattern='value:*')
+        for value in values:
+            print(value.split('value:')[1], self.redis.get(value))
+
+        print('-' * 80)
+        print('scores for variances')
+        variances = self.redis.keys(pattern='variance:*')
+        for variance in variances:
+            print(variance.split('variance:')[1], self.redis.get(variance))
 
 
 if __name__ == '__main__':
     opt = TurboCoverage()
-    print(opt.metrics('/dev/shm/vasilisk_coverage/thread1/turbo-f-0.json'))
+    opt.print_records()

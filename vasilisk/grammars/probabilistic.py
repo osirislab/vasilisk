@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
 import logging
 import os
 import random
-import sys
 
-from dharma_grammar import DharmaGrammar
+from .dharma_grammar import DharmaGrammar
 
 
 class ProbabilisticGrammar(DharmaGrammar):
@@ -30,24 +28,6 @@ class ProbabilisticGrammar(DharmaGrammar):
         # self.variables_probability = {}
         self.variances_probability = {}
 
-        total = 0
-        for rule, subrules in self.values.items():
-            for subrule in subrules:
-                total += 1
-
-        probability = round(100 / total)
-
-        for rule, subrules in self.values.items():
-            if len(subrules) > 1:
-                for i, subrule in enumerate(subrules):
-                    self.values_probability[f'{rule}:{i}'] = probability
-            else:
-                self.values_probability[rule] = probability
-
-        for variance in self.variances:
-            probability = round(100 / len(self.variances))
-            self.variances_probability[variance] = probability
-
         self.grammars = [self.grammar_path]
         super().__init__(self.grammars)
 
@@ -59,24 +39,20 @@ class ProbabilisticGrammar(DharmaGrammar):
         rules = {}
 
         for rule in grammar_split:
-            rule = [r.strip() for r in rule.split(':=')]
+            title, subrules = [r.strip() for r in rule.split(':=')]
 
-            values = [value.strip() for value in rule[1].split('\n')]
-            rules[rule[0]] = values
+            subrules = [subrule.strip() for subrule in subrules.split('\n')]
+            for i, subrule in enumerate(subrules):
+                rules[title + ':' + str(i)] = subrule
 
         return rules
 
+    def load_probabilities(self, values, variances):
+        self.values_probability = values
+        self.variances_probability = variances
+
     def choice(self, probabilities):
-        sum = 0
-        print(probabilities)
-        for probability in probabilities.values():
-            sum += probability
-
-        if sum != 100:
-            self.logger.error('invalid probabilties')
-            sys.exit(1)
-
-        choice = random.randint(0, 100)
+        choice = random.randint(0, sum(probabilities.values()))
 
         curr = 0
         for rule, probability in probabilities.items():
@@ -100,22 +76,16 @@ class ProbabilisticGrammar(DharmaGrammar):
             f.write('\n')
 
         value = self.choice(self.values_probability)
-        print(value)
-        index = 0
-        if ':' in value:
-            split = value.split(':')
-            value = split[0]
-            index = int(split[1])
 
         with open(self.grammar_path, 'a') as f:
             f.write('%section% := value\n\n')
-            f.write(f'value :=\n\t{self.values[value][index]}\n\n')
+            f.write(f'value :=\n\t{self.values[value]}\n\n')
 
         variance = self.choice(self.variances_probability)
 
         with open(self.grammar_path, 'a') as f:
             f.write('%section% := variance\n\n')
-            f.write(f'variance :=\n\t{self.variances[variance][0]}\n\n')
+            f.write(f'variance :=\n\t{self.variances[variance]}\n\n')
 
         # variable = self.choice(self.variables_probability)
         #
@@ -123,26 +93,6 @@ class ProbabilisticGrammar(DharmaGrammar):
         #     f.write('%section := variable\n\n')
         #     f.write(f'{variable} :=\n\t{self.variables[variable]}\n\n')
 
-        self.dharma.process_grammars(self.grammars)
+        self.create_dharma(self.grammars)
 
-        return ((variance, value), super().generate())
-
-
-if __name__ == '__main__':
-    g = ProbabilisticGrammar()
-    # values = {
-    #     'builtinMath:0': 10,
-    #     'builtinMath:1': 10,
-    #     'builtinMath:2': 10,
-    #     'string': 10,
-    #     'math:0': 10,
-    #     'math:1': 10,
-    #     'math:2': 10,
-    #     'math:3': 10,
-    #     'negative_number': 10,
-    #     'intArgs': 10
-    # }
-    # variances = {
-    #     'LanguageConstructs': 100
-    # }
-    g.generate()
+        return ((value, variance), super().generate())
