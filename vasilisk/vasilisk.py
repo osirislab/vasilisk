@@ -23,7 +23,7 @@ class Vasilisk:
 
         self.grammar = grammars.grammars[fuzzer]()
         self.fuzzer = fuzzers.fuzzers[fuzzer](
-            procs, d8, self.grammar, crashes, tests, debug
+            procs, d8, crashes, tests, debug
         )
 
         self.queue = JoinableQueue(self.rate_limit)

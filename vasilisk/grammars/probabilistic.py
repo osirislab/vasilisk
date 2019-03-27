@@ -2,6 +2,8 @@ import logging
 import os
 import random
 
+from coverage import handler
+
 from .dharma_grammar import DharmaGrammar
 
 
@@ -21,12 +23,9 @@ class ProbabilisticGrammar(DharmaGrammar):
         current_dir = os.path.dirname(os.path.realpath(__file__))
         templates = os.path.join(current_dir, 'templates')
         self.values = self.parse(os.path.join(templates, 'values.dg'))
-        # self.variables = self.parse(os.path.join(templates, 'variables.dg'))
-        self.variances = self.parse(os.path.join(templates, 'variances.dg'))
+        self.controls = self.parse(os.path.join(templates, 'controls.dg'))
 
-        self.values_probability = {}
-        # self.variables_probability = {}
-        self.variances_probability = {}
+        self.coverage = handler.CoverageHandler(self.values, self.controls)
 
         self.grammars = [self.grammar_path]
         super().__init__(self.grammars)
@@ -47,9 +46,9 @@ class ProbabilisticGrammar(DharmaGrammar):
 
         return rules
 
-    def load_probabilities(self, values, variances):
-        self.values_probability = values
-        self.variances_probability = variances
+    def load_probabilities(self):
+        self.values_probability = self.coverage.get_values()
+        self.controls_probability = self.coverage.get_controls()
 
     def choice(self, probabilities):
         choice = random.randint(0, sum(probabilities.values()))
@@ -61,6 +60,8 @@ class ProbabilisticGrammar(DharmaGrammar):
                 return rule
 
     def generate(self):
+        self.load_probabilities()
+
         headers = [
             '%%% Generated Grammar',
             '%const% VARIANCE_MAX := 1',
@@ -81,18 +82,12 @@ class ProbabilisticGrammar(DharmaGrammar):
             f.write('%section% := value\n\n')
             f.write(f'value :=\n\t{self.values[value]}\n\n')
 
-        variance = self.choice(self.variances_probability)
+        control = self.choice(self.controls_probability)
 
         with open(self.grammar_path, 'a') as f:
             f.write('%section% := variance\n\n')
-            f.write(f'variance :=\n\t{self.variances[variance]}\n\n')
-
-        # variable = self.choice(self.variables_probability)
-        #
-        # with open(self.gen_grammar_path, 'a') as f:
-        #     f.write('%section := variable\n\n')
-        #     f.write(f'{variable} :=\n\t{self.variables[variable]}\n\n')
+            f.write(f'variance :=\n\t{self.controls[control]}\n\n')
 
         self.create_dharma(self.grammars)
 
-        return ((value, variance), super().generate())
+        return ((value, control), super().generate())

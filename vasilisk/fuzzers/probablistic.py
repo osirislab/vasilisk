@@ -4,13 +4,13 @@ import os
 import subprocess
 import uuid
 
-from coverage import turbo
+from coverage import recorder
 
 from .base import BaseFuzzer
 
 
 class ProbablisticFuzzer(BaseFuzzer):
-    def __init__(self, threads, d8, grammar, crashes, tests, debug):
+    def __init__(self, threads, d8, crashes, tests, debug):
         self.logger = logging.getLogger(__name__)
 
         self.d8 = d8
@@ -34,15 +34,7 @@ class ProbablisticFuzzer(BaseFuzzer):
                 self.logger.info('creating thread specific coverage dir')
                 os.makedirs(coverage_path)
 
-        self.coverage = turbo.TurboCoverage()
-        self.grammar = grammar
-        self.coverage.scan_values(self.grammar.values)
-        self.coverage.scan_variances(self.grammar.variances)
-
-        self.grammar.load_probabilities(
-            self.coverage.get_values(),
-            self.coverage.get_variances()
-        )
+        self.coverage = recorder.CoverageRecorder()
 
     def execute(self, test_case, thread):
         options = ['-e', '--allow-natives-syntax', '--trace-turbo',
@@ -75,4 +67,6 @@ class ProbablisticFuzzer(BaseFuzzer):
         self.coverage.record(grammar, self.coverage_paths[thread])
 
     def validate(self, output):
-        return True
+        if output is not None:
+            return True
+        return False
