@@ -1,495 +1,495 @@
-Grammer  := 
+Grammer  :=
 	+Statement+
 
-SourceCharacter  := 
+SourceCharacter  :=
 	x000000
-    x10FFFF
+  x10FFFF
 
-InputElementDiv  := 
+InputElementDiv  :=
 	+WhiteSpace+
 	+LineTerminator+
 	+CommonToken+
 	+DivPunctuator+
 	+RightBracePunctuator+
 
-InputElementRegExp  := 
+InputElementRegExp  :=
 	+WhiteSpace+
 	+LineTerminator+
 	+CommonToken+
 	+RightBracePunctuator+
 	+RegularExpressionLiteral+
 
-InputElementRegExpOrTemplateTail  := 
+InputElementRegExpOrTemplateTail  :=
 	+WhiteSpace+
 	+LineTerminator+
 	+CommonToken+
 	+RegularExpressionLiteral+
 	+TemplateSubstitutionTail+
 
-InputElementTemplateTail  := 
+InputElementTemplateTail  :=
 	+WhiteSpace+
 	+LineTerminator+
 	+CommonToken+
 	+DivPunctuator+
 	+TemplateSubstitutionTail+
 
-WhiteSpace  := 
-	 <TAB> 
-	 <VT> 
-	 <FF> 
-	 <SP> 
-	 <NBSP> 
-	 <ZWNBSP> 
-	 <USP> 
+WhiteSpace  :=
+	 <TAB>
+	 <VT>
+	 <FF>
+	 <SP>
+	 <NBSP>
+	 <ZWNBSP>
+	 <USP>
 
 
-LineTerminator  := 
-	 <LF> 
-	 <CR> 
-	 <LS> 
-	 <PS>  
+LineTerminator  :=
+	 <LF>
+	 <CR>
+	 <LS>
+	 <PS>
 
 
-LineTerminatorSequence  := 
-	 <LF> 
-	 <CR> 
-	 <LS> 
-	 <PS> 
+LineTerminatorSequence  :=
+	 <LF>
+	 <CR>
+	 <LS>
+	 <PS>
 
 
-CommonToken  := 
+CommonToken  :=
 	+IdentifierName+
 	+Punctuator+
 	+NumericLiteral+
 	+StringLiteral+
 	+Template+
 
-IdentifierName  := 
+IdentifierName  :=
 	+IdentifierStart+
 	+IdentifierName+ +IdentifierPart+
 
-IdentifierStart  := 
+IdentifierStart  :=
 	$
     _
-	\ 
+	\
 
-IdentifierPart  := 
+IdentifierPart  :=
 	$
 	_
 	\  +UnicodeEscapeSequence+
-	 <ZWNJ> 
-	 <ZWJ> 
+	 <ZWNJ>
+	 <ZWJ>
 
-ReservedWord  := 
+ReservedWord  :=
 	+Keyword+
 	+FutureReservedWord+
 	+NullLIteral+
 	+BooleanLiteral+
 
-Keyword  := 
-	 break 
-	 case 
-	 catch 
-	 class 
-	 const 
-	 continue 
-	 debugger 
-	 default 
-	 delete 
-     do 
-	 else 
-	 export 
-	 extends 
-	 finally 
-	 for 
-	 function 
-	 if 
-	 import 
-     in 
-	 instanceof 
-	 new 
-	 return 
-	 super 
-	 switch 
-	 this 
-	 throw 
-	 try  
-     typeof 
-	 var 
-	 void 
-	 while 
-	 with 
-	 yield 
+Keyword  :=
+	 break
+	 case
+	 catch
+	 class
+	 const
+	 continue
+	 debugger
+	 default
+	 delete
+	 do
+	 else
+	 export
+	 extends
+	 finally
+	 for
+	 function
+	 if
+	 import
+	 in
+	 instanceof
+	 new
+	 return
+	 super
+	 switch
+	 this
+	 throw
+	 try
+	 typeof
+	 var
+	 void
+	 while
+	 with
+	 yield
 
-FutureReservedWord  := 
-	 enum 
-	 await 
-     implements 
-	 interface 
-	 package 
-	 private 
-	 protected 
-	 public 
+FutureReservedWord  :=
+	 enum
+	 await
+	 implements
+	 interface
+	 package
+	 private
+	 protected
+	 public
 
-Punctuator  := 
-	 { 
-	 } 
-	 ( 
-	 ) 
-	 [ 
-	 ] 
-	 . 
-	 ; 
-	 , 
-	 < 
-	 > 
-	 <= 
-	 >= 
-	 == 
-	 != 
-	 === 
-	 !== 
-     + 
-	 - 
-	 * 
-	 % 
-	 ++ 
-	 -- 
-	 << 
-	 >> 
-	 >>> 
-	 & 
-	 | 
-	 ^ 
-     ! 
-	 ~ 
-	 && 
-	 ? 
-	 : 
-	 = 
-	 += 
-	 -= 
-	 *= 
-	 %= 
-	 <<= 
-	 >>= 
-	 >>>= 
-	 &= 
-	 |= 
-	 ^= 
-	 => 
+Punctuator  :=
+	 {
+	 }
+	 (
+	 )
+	 [
+	 ]
+	 .
+	 ;
+	 ,
+	 <
+	 >
+	 <=
+	 >=
+	 ==
+	 !=
+	 ===
+	 !==
+	 +
+	 -
+	 *
+	 %
+	 ++
+	 --
+	 <<
+	 >>
+	 >>>
+	 &
+	 |
+	 ^
+	 !
+	 ~
+	 &&
+	 ?
+	 :
+	 =
+	 +=
+	 -=
+	 *=
+	 %=
+	 <<=
+	 >>=
+	 >>>=
+	 &=
+	 |=
+	 ^=
+	 =>
 
-DivPunctuator  := 
-	 / 
-	 /= 
+DivPunctuator  :=
+	 /
+	 /=
 
-RightBracePunctuator  := 
-	 } 
+RightBracePunctuator  :=
+	 }
 
-NullLiteral  := 
-	 null 
+NullLiteral  :=
+	 null
 
-BooleanLiteral  := 
-	 true 
-	 false 
+BooleanLiteral  :=
+	 true
+	 false
 
-NumbericLiteral  := 
+NumbericLiteral  :=
 	+DecimalLiteral+
 	+BinaryLiteral+
 	+OctalIntegerLiteral+
 	+HexIntegerLiteral+
 
-DecimalLiteral  := 
+DecimalLiteral  :=
 	+DecimalIntegerLiteral.+DecimalDigits+
-	.+DecimalDigits+ 
-    +DecimalIntegerLiteral+ 
+	.+DecimalDigits+
+    +DecimalIntegerLiteral+
 
-DecimalIntegerLiteral  := 
-	 0 
-	+NonZeroDigit+ 
+DecimalIntegerLiteral  :=
+	 0
+	+NonZeroDigit+
     +DecimalDigits+
 
-DecimalDigits  := 
+DecimalDigits  :=
 	+DecimalDigit+
 
-DecimalDigit  := 
-	 0 
-	 1 
-	 2 
-	 3 
-	 4 
-	 5 
-	 6 
-	 7 
-	 8 
-	 9 
+DecimalDigit  :=
+	 0
+	 1
+	 2
+	 3
+	 4
+	 5
+	 6
+	 7
+	 8
+	 9
 
-NonZeroDigit  := 
-	 1 
-	 2 
-	 3 
-	 4 
-	 5 
-	 6 
-	 7 
-	 8 
-	 9 
+NonZeroDigit  :=
+	 1
+	 2
+	 3
+	 4
+	 5
+	 6
+	 7
+	 8
+	 9
 
-ExponentPart  := 
+ExponentPart  :=
 	+ExponentIndicator SignedInteger+
 
-ExponentIndicator  := 
-	 e 
-	 E 
+ExponentIndicator  :=
+	 e
+	 E
 
-SignedInteger  := 
+SignedInteger  :=
 	+DecimalDigits+
-	 ++DecimalDigits+
-	 -+DecimalDigits+
+	++DecimalDigits+
+	-+DecimalDigits+
 
-BinaryIntegerLiteral  := 
-	 0b+BinaryDigits+
-	 0B+BinaryDigits+
+BinaryIntegerLiteral  :=
+	0b+BinaryDigits+
+	0B+BinaryDigits+
 
 
-BinaryDigits  := 
+BinaryDigits  :=
 	+BinaryDigit+
 	+BinaryDigits+
 
-BinaryDigit  := 
-	 0 
-	 1 
+BinaryDigit  :=
+	 0
+	 1
 
-OctalIntegerLiteral  := 
+OctalIntegerLiteral  :=
 	 0o +OctalDigits+
 	 0O +OctalDigits+
 
-OctalDigits  := 
-	+OctalDigits+ 
-    +OctalDigit+
+OctalDigits  :=
+	+OctalDigits+
+  +OctalDigit+
 
-OctalDigit  := 
-	 0 
-	 1 
-	 2 
-	 3 
-	 4 
-	 5 
-	 6 
-	 7 
+OctalDigit  :=
+	 0
+	 1
+	 2
+	 3
+	 4
+	 5
+	 6
+	 7
 
-HexIntegerLiteral  := 
+HexIntegerLiteral  :=
 	 0xHexDigits
 	 0XHexDigits
 
 
-HexDigits  := 
+HexDigits  :=
 	+HexDigit+
-	+HexDigits+ 
+	+HexDigits+
 
-HexDigit  := 
-	 0 
-	 1 
-	 2 
-	 3 
-	 4 
-	 5 
-	 6 
-	 7 
-	 8 
-	 9 
-	 a 
-	 b 
-	 c 
-	 d 
-	 e 
-	 f 
-	 A 
-	 B 
-	 C 
-	 D 
-	 E 
-	 F 
+HexDigit  :=
+	 0
+	 1
+	 2
+	 3
+	 4
+	 5
+	 6
+	 7
+	 8
+	 9
+	 a
+	 b
+	 c
+	 d
+	 e
+	 f
+	 A
+	 B
+	 C
+	 D
+	 E
+	 F
 
 
-StringLiteral  := 
+StringLiteral  :=
 	' ' +DoubleStringCharacters+ ' '
 	' ' +SingleStringCharacters+ ' '
 
-DoubleStringCharacters  := 
-	+DoubleStringCharacter+ 
+DoubleStringCharacters  :=
+	+DoubleStringCharacter+
     +DoubleStringCharacters+
 
-SingleStringCharacters  := 
-	+SingleStringCharacter+ 
+SingleStringCharacters  :=
+	+SingleStringCharacter+
     +SingleStringCharacters+
 
-DoubleStringCharacter  := 
+DoubleStringCharacter  :=
 	\+EscapeSequence+
 	+LineContinuation+
 
-SingleStringCharacter  := 
+SingleStringCharacter  :=
 	\+EscapeSequence+
 	+LineContinuation+
 
-LineContinuation  := 
+LineContinuation  :=
 	 \+LineTerminatorSequence+
 
 
-EscapeSequence  := 
+EscapeSequence  :=
 	+CharacterEscapeSequence+
 	+HexEscapeSequence+
 	+UnicodeEscapeSequence+
 
-CharacterEscapeSequence  := 
+CharacterEscapeSequence  :=
 	+SingleEscapeCharacter+
 	+NonEscapeCharacter+
 
-SingleEscapeCharacter  := 
-	 ' 
+SingleEscapeCharacter  :=
+	 '
 	' '
-	 \ 
-	 b 
-	 f 
-	 n 
-	 r 
-	 t 
-	 v 
+	 \
+	 b
+	 f
+	 n
+	 r
+	 t
+	 v
 
-NonEscapeCharacter  := 
-    #x0012 
-    #x0015 
-    #x2028 
+NonEscapeCharacter  :=
+    #x0012
+    #x0015
+    #x2028
     #x2029
 
-EscapeCharacter  := 
+EscapeCharacter  :=
 	+SingleEscapeCharacter+
 	+DecimalDigit+
 	x
 	u
 
-HexEscapeSequence  := 
+HexEscapeSequence  :=
 	 x  +HexDigit+ +HexDigit+
 
 
-UnicodeEscapeSequence  := 
+UnicodeEscapeSequence  :=
 	 u  +Hex4Digits+
 	 u[+HexDigits+, +HexDigits+]
 
 
-Hex4Digits  := 
+Hex4Digits  :=
 	+HexDigit+ +HexDigit+ +HexDigit+ +HexDigit+
 
-RegularExpressionLiteral  := 
+RegularExpressionLiteral  :=
 	 /  RegularExpressionBody / RegularExpressionFlags
 
 
-RegularExpressionBody  := 
+RegularExpressionBody  :=
 	+RegularExpressionFirstChar +RegularExpressionChars+
 
-RegularExpressionChars  := 
-	+RegularExpressionChars+ 
+RegularExpressionChars  :=
+	+RegularExpressionChars+
     +RegularExpressionChar+
 
-RegularExpressionFirstChar  := 
+RegularExpressionFirstChar  :=
 	\ / []| RegularExpressionBackslashSequence+
 	+RegularExpressionClass+
 
-RegularExpressionChar  := 
-	[^ 
-    #x0012 
-    #x0015 
-    #x2028 
-    #x2029 
-    \ 
-    / 
+RegularExpressionChar  :=
+	[^
+    #x0012
+    #x0015
+    #x2028
+    #x2029
+    \
+    /
     []
     +RegularExpressionBackslashSequence+
 	+RegularExpressionClass+
 
-RegularExpressionBackslashSequence  := 
+RegularExpressionBackslashSequence  :=
 	 \  +RegularExpressionNonTerminator+
 
 
-RegularExpressionNonTerminator  := 
+RegularExpressionNonTerminator  :=
 	[^
-    #x0012 
-    #x0015 
-    #x2028 
+    #x0012
+    #x0015
+    #x2028
     #x2029
     ]
 
-RegularExpressionClass  := 
+RegularExpressionClass  :=
 	 [  +RegularExpressionClassChars+ ]
 
 
-RegularExpressionClassChars  := 
-	+RegularExpressionClassChars+ 
+RegularExpressionClassChars  :=
+	+RegularExpressionClassChars+
     +RegularExpressionClassChar+
 
-RegularExpressionClassChar  := 
+RegularExpressionClassChar  :=
 	[^
-    \ 
-    #x0012 
-    #x0015 
+    \
+    #x0012
+    #x0015
     #x2028
-    #x2029 
+    #x2029
     #x005D
     ]+
 	+RegularExpressionBackslashSequence+
 
-RegularExpressionFlags  := 
-	+RegularExpressionFlags+ 
+RegularExpressionFlags  :=
+	+RegularExpressionFlags+
     +IdentifierPart+
 
-Template  := 
+Template  :=
 	+NoSubstitutionTemplate+
 	+TemplateHead+
 
-NoSubstitutionTemplate  := 
+NoSubstitutionTemplate  :=
 	 `+TemplateCharacters+`
 
-TemplateHead  := 
+TemplateHead  :=
 	 `+TemplateCharacters+ ${
 
-TemplateSubstitutionTail  := 
+TemplateSubstitutionTail  :=
 	+TemplateMiddle+
 	+TemplateTail+
 
-TemplateMiddle  := 
+TemplateMiddle  :=
 	 }  +TemplateCharacters+ ${
 
-TemplateTail  := 
+TemplateTail  :=
 	 }  +TemplateCharacters+ `
 
-TemplateCharacters  := 
-	+TemplateCharacter+ 
+TemplateCharacters  :=
+	+TemplateCharacter+
     +TemplateCharacters+
 
-TemplateCharacter  := 
+TemplateCharacter  :=
 	 $  [^{]
 	 \  +EscapeSequence+
 	+LineContinuation+
 	+LineTerminatorSequence+
     [^ ` \ $  #x0012 #x0015 #x2028 #x2029]
 
-IdentifierReference  := 
+IdentifierReference  :=
 	+Identifier+
 	 yield
 
-BindingIdentifier  := 
-	+Identifier+
-	yield 
-
-LabelIdentifier  := 
+BindingIdentifier  :=
 	+Identifier+
 	yield
 
-Identifier  := 
+LabelIdentifier  :=
+	+Identifier+
+	yield
+
+Identifier  :=
 	+IdentifierName+
 
-PrimaryExpression  := 
-	 this 
+PrimaryExpression  :=
+	 this
 	IdentifierReference
 	Literal
 	ArrayLiteral
@@ -502,95 +502,95 @@ PrimaryExpression  :=
 TemplateLIteral
 	+CoverParenthesizedExpressionAndArrowParameterList+
 
-CoverParenthesizedExpressionAndArrowParameterList  := 
+CoverParenthesizedExpressionAndArrowParameterList  :=
 	 (  +Expression+ )
 	 (  )
 	 (  ... +BindingIdentifier+ )
 	 (  +Expression+ , ... +BindingIdentifier+ )
 
 
-ParenthesizedExpression  := 
+ParenthesizedExpression  :=
 	 (+Expression+)
 
 
-Literal  := 
+Literal  :=
 	+NullLiteral+
 	+BooleanLiteral+
 	+NumbericLiteral+
 	+StringLiteral+
 
-ArrayLiteral  := 
+ArrayLiteral  :=
 	 [  +Elision+ ]
 	 [  +ElementList+ ]
 	 [  +ElementList+ , +Elision+ ]
 
 
-ElementList  := 
+ElementList  :=
 	+Elision+ +AssignmentExpression+
 	+Elision+ +SpreadElement+
 	+ElementList+, Elision, +AssignmentExpression+
-	+ElementLIst+, 
-	+Elision+ 
+	+ElementLIst+,
+	+Elision+
     +SpreadElement+
 
-Elision  := 
-	 , 
-	Elision  , 
+Elision  :=
+	 ,
+	Elision  ,
 
 
-SpreadElement  := 
+SpreadElement  :=
 	 ...  +AssignmentExpression+
 
 
-ObjectLiteral  := 
+ObjectLiteral  :=
 	 {  }
 	 {  +PropertyDefinitionList+}
 	 {  +PropertyDefinitionList+ , }
 
 
-PropertyDefinitionList  := 
+PropertyDefinitionList  :=
 	+PropertyDefinition+
 	+PropertyDefinitionList+,+PropertyDefinition+
 
-PropertyDefinition  := 
+PropertyDefinition  :=
 	+IdentifierReference+
 	+CoverInitializedName+
 	+PropertyName+  :  +AssignmentExpression+
 	+MethodDefinition+
 
-PropertyName  := 
+PropertyName  :=
 	+LiteralPropertyName+
 	+ComputedPropertyName+
 
-LiteralPropertyName  := 
+LiteralPropertyName  :=
 	+IdentifierName+
 	+StringLiteral+
 	+NumericLiteral+
 
-ComputedPropertyName  := 
+ComputedPropertyName  :=
 	 [  +AssignmentExpression+ ]
 
 
-CoverInitializedName  := 
+CoverInitializedName  :=
 	+IdentifierReference+ +Initializer+
 
-Initializer  := 
+Initializer  :=
 	 =  +AssignmentExpression+
 
 
-TemplateLiteral  := 
+TemplateLiteral  :=
 	+NoSubstitutionTemplate+
 	+TemplateHead+ +Expression+ +TemplateSpans+
 
-TemplateSpans  := 
+TemplateSpans  :=
 	+TemplateTail+
 	+TemplateMiddleList+ +TemplateTail+
 
-TemplateMiddleList  := 
+TemplateMiddleList  :=
 	+TemplateMiddle+ +Expression+
 	+TemplateMiddleList+ +TemplateMiddle+ +Expression+
 
-MemberExpression  := 
+MemberExpression  :=
 	+PrimaryExpression+
 	+MemberExpression  [  Expression ]+
 	+MemberExpression+.+IdentifierName+
@@ -599,23 +599,23 @@ MemberExpression  :=
 	+MetaProperty+
     new +MemberExpression+ +Arguments+
 
-SuperProperty  := 
+SuperProperty  :=
 	 super  [ +Expression+ ]
 	 super  . IdentifierName
 
 
-MetaProperty  := 
+MetaProperty  :=
 	+NewTarget+
 
-NewTarget  := 
+NewTarget  :=
 	 new.target
 
 
-NewExpression  := 
+NewExpression  :=
 	+MemberExpression+
 	new +NewExpression+
 
-CallExpression  := 
+CallExpression  :=
 	+MemberExpression+ +Arguments+
 	+SuperCall+
 	+CallExpression+ +Arguments+
@@ -623,31 +623,31 @@ CallExpression  :=
 	+CallExpression+.+IdentifierName+
 	+CallExpression+ +TemplateLiteral+
 
-SuperCall  := 
+SuperCall  :=
 	 super +Arguments+
 
 
-Arguments  := 
+Arguments  :=
 	 (  )
 	 (  ArgumentList )
 
 
-ArgumentList  := 
+ArgumentList  :=
 	+AssignmentExpression+
 	+ ...  +AssignmentExpression+
 	+ArgumentList+  ,  +AssignmentExpression+
 	+ArugmentList+  ,  ... +AssignmentExpression+
 
-LeftHandSideExpression  := 
+LeftHandSideExpression  :=
 	+NewExpression+
 	+CallExpression+
 
-PostfixExpression  := 
+PostfixExpression  :=
 	+LeftHandSideExpression+
 	+LeftHandSideExpression+
 	+LeftHandSideExpression+
 
-UnaryExpression  := 
+UnaryExpression  :=
 	+PostfixExpression+
 	delete +UnaryExpression+
 	void  +UnaryExpression+
@@ -657,55 +657,55 @@ UnaryExpression  :=
 	 +  +UnaryExpression+
 	 -  +UnaryExpression+
 	 ~  +UnaryExpression+
-	 !  +UnaryExpression+ 
+	 !  +UnaryExpression+
 
-MultiplicativeExpression  := 
+MultiplicativeExpression  :=
 	+UnaryExpression+
 	+MultiplicativeExpression+
-    +MultiplicativeOperator+ 
+    +MultiplicativeOperator+
     +UnaryExpression+
 
-MultiplicativeOperator  := 
+MultiplicativeOperator  :=
 	*
-    / 
+    /
     %
 
-AdditiveExpression  := 
+AdditiveExpression  :=
 	+MultiplicativeExpression+
 	+AdditiveExpression+  + +MultiplicativeExpression+
 	+AdditiveExpression+  -  +MultiplicativeExpression+
 
-ShiftExpression  := 
+ShiftExpression  :=
 	+AdditiveExpression+
 	+ShiftExpression+  <<  +AdditiveExpression+
 	+ShiftExpression+  >>  +AdditiveExpression+
 	+ShiftExpression+  >>>  +AdditiveExpression+
 
-RelationalExpression  := 
+RelationalExpression  :=
 	+ShiftExpression+
 	+RelationalExpression+  <  +ShiftExpression+
-    +RelationalExpression+  >  +ShiftExpression+ 
-    +RelationalExpression+  <=  +ShiftExpression+ 
-    +RelationalExpression+  >=  +ShiftExpression+ 
-    +RelationalExpression+  instanceof  +ShiftExpression+ 
-    +RelationalExpression+  in  +ShiftExpression+ 
+    +RelationalExpression+  >  +ShiftExpression+
+    +RelationalExpression+  <=  +ShiftExpression+
+    +RelationalExpression+  >=  +ShiftExpression+
+    +RelationalExpression+  instanceof  +ShiftExpression+
+    +RelationalExpression+  in  +ShiftExpression+
 
-EqualityExpression  := 
+EqualityExpression  :=
 	+RelationalExpression+
-    +EqualityExpression+  ==  +RelationalExpression+ 
-    +EqualityExpression+  !=  +RelationalExpression+  
+    +EqualityExpression+  ==  +RelationalExpression+
+    +EqualityExpression+  !=  +RelationalExpression+
     +EqualityExpression+  === +RelationalExpression+
-    +EqualityExpression+  !== +RelationalExpression+ 
+    +EqualityExpression+  !== +RelationalExpression+
 
-BitwiseANDExpression  := 
+BitwiseANDExpression  :=
 	+RelationalExpression+
     +BitwiseANDExpression+  &  +RelationalExpression+
 
-BitwiseXORExpression  := 
+BitwiseXORExpression  :=
 	+BitwiseANDExpression+
     +BitwiseXORExpression+  ^  +BitwiseANDExpression+
 
-BitwiseORExpression  := 
+BitwiseORExpression  :=
 	+BitwiseXORExpression+
     +BitwiseORExpression+
     +BitwiseXORExpression+
@@ -713,32 +713,32 @@ BitwiseORExpression  :=
 	+LogicalORExpression+
     +LogicalORExpression+  ?  +AssignmentExpression+ : +AssignmentExpression+
 
-AssignmentExpression  := 
+AssignmentExpression  :=
 	+ConditionalExpression+
-    +YieldExpression+= 
-    +ArrowFunction+ 
+    +YieldExpression+=
+    +ArrowFunction+
     +LeftHandSideExpression+  =  +AssignmentExpression+
     +LeftHandSideExpression+ +AssignmentOperator+ +AssignmentExpression+
 
-AssignmentOperator  := 
-	 *= 
-	 /= 
-	 %= 
-	 += 
-	 -= 
-	 <<= 
-	 >>= 
-	 >>>= 
-	 &= 
-	 ^= 
-	 |= 
+AssignmentOperator  :=
+	 *=
+	 /=
+	 %=
+	 +=
+	 -=
+	 <<=
+	 >>=
+	 >>>=
+	 &=
+	 ^=
+	 |=
 
 
-Expression  := 
+Expression  :=
 	+AssignmentExpression+
 	+Expression+ +AssignmentExpression+
 
-Statement  := 
+Statement  :=
 	+BlockStatement+
 	+VariableStatement+
 	+EmptyStatement+
@@ -754,415 +754,415 @@ Statement  :=
 	+TryStatement+
 	+DebuggerStatement+
 
-Declaration  := 
+Declaration  :=
 	+HoistableDeclaration+
 	+ClassDeclaration+
 	+LexicalDeclaration+
 
-HoistableDeclaration  := 
+HoistableDeclaration  :=
 	+FunctionDeclaration+
 	+GeneratorDeclaration+
 
-BreakableStatement  := 
+BreakableStatement  :=
 	+IterationStatement+
 	+SwitchStatement+
 
-BlockStatement  := 
+BlockStatement  :=
 	+Block+
 
-Block  := 
+Block  :=
 	 {+StatementList+}
 
 
-StatementList  := 
+StatementList  :=
 	+StatementListItem+
 	+StatementList+ +StatementListItem+
 
-StatementListItem  := 
+StatementListItem  :=
 	+Statement+
 	+Declaration+
 
-LexicalDeclaration  := 
+LexicalDeclaration  :=
 	+LetOrConst+ +BindingList+
 
-LetOrConst  := 
-	 let 
-	 const 
+LetOrConst  :=
+	 let
+	 const
 
-BindingList  := 
+BindingList  :=
 	+LexicalBinding+
 	+BindingList+  ,  +LexicalBinding+
 
-LexicalBinding  := 
+LexicalBinding  :=
 	+BindingIdentifier+ +Initializer?+
 	+BindingPattern+ +Initializer+
 
-VariableStatement  := 
+VariableStatement  :=
 	 var  +VariableDeclarationList+
 
-VariableDeclarationList  := 
+VariableDeclarationList  :=
 	+VariableDeclaration+
 	+VariableDeclarationList+  ,  +VariableDeclaration+
 
-VariableDeclaration  := 
+VariableDeclaration  :=
 	+BindingIdentifier +Initializer+
 	+BindingPattern+ +Initializer+
 
-BindingPattern  := 
+BindingPattern  :=
 	+ObjectBindingPattern+
 	+ArrayBindingPattern+
 
-ObjectBindingPattern  := 
+ObjectBindingPattern  :=
 	 {  }
 	 {  +BindingPropertyList+ }
 	 {  +BindingPropertyList+ , }
 
 
-ArrayBindingPattern  := 
+ArrayBindingPattern  :=
 	 [  +BindingRestElement+ ]
 	 [  +BindingElementList+ ]
 	 [  +BindingElementList+ , +Elision+, +BindingRestElement+ ]
 
-BindingPropertyList  := 
+BindingPropertyList  :=
 	+BindingProperty+
-	+BindingPropertyList+ 
+	+BindingPropertyList+
     +BindingProperty+
 
-BindingElementList  := 
+BindingElementList  :=
 	+BindingElisionElement+
 	+BindingElementList+ , +BindingElisionElement+
 
-BindingElisionElement  := 
+BindingElisionElement  :=
 	+Elision+
     +BindingElement+
 
-BindingProperty  := 
+BindingProperty  :=
 	+SingleNameBinding+
 	+PropertyName+ : +BindingElement+
 
-BindingElement  := 
+BindingElement  :=
 	+SingleNameBinding+
-	+BindingPattern+ 
+	+BindingPattern+
     +Initializer+
 
-SingleNameBinding  := 
-	+BindingIdentifier+ 
+SingleNameBinding  :=
+	+BindingIdentifier+
     +Initializer+
 
-BindingRestElement  := 
+BindingRestElement  :=
 	 ...  +BindingIdentifier+
 
 
-EmptyStatement  := 
-	 ; 
+EmptyStatement  :=
+	 ;
 
 
-ExpressionStatement  := 
+ExpressionStatement  :=
 	 +Expression+;
 
-IfStatement  := 
+IfStatement  :=
 	 if  ( +Expression+ ) +Statement+ else +statement+
-     if  ( +Expression+ ) +Statement+
+	 if  ( +Expression+ ) +Statement+
 
-IterationStatement  := 
+IterationStatement  :=
 	 do  +Statement+ while ( +Expression+ );
-     while  ( +Expression+ ) +Statement+ 
-     for  ( +Expression+ ; +Expression+ ; +Expression+ ) +Statement+ 
-     for  ( var +VariableDeclarationList+ ; +Expression+ ; +Expression+ ) +Statement+
-     for  ( +LexicalDeclaration+ +Expression+ ; +Expression+ ; +Expression+ ) +Statement+
-     for  ( +LeftHandSideExpression+ in +Expression+ ) +Statement+ 
-     for  ( var +ForBinding+ in +Expression+ ) +Statement+
-     for  ( +ForDeclaration+ in +Expression+ ) +Statement+
-     for  ( +LeftHandSideExpression+ of +AssignmentExpression+ ) +Statement+
-     for  ( var +ForBinding+ of +AssignmentExpression+ ) +Statement+
-     for  ( +LexicalDeclaration+ +Expression+ of +AssignmentExpression+ ) +Statement+
+	 while  ( +Expression+ ) +Statement+
+	 for  ( +Expression+ ; +Expression+ ; +Expression+ ) +Statement+
+	 for  ( var +VariableDeclarationList+ ; +Expression+ ; +Expression+ ) +Statement+
+	 for  ( +LexicalDeclaration+ +Expression+ ; +Expression+ ; +Expression+ ) +Statement+
+	 for  ( +LeftHandSideExpression+ in +Expression+ ) +Statement+
+	 for  ( var +ForBinding+ in +Expression+ ) +Statement+
+	 for  ( +ForDeclaration+ in +Expression+ ) +Statement+
+	 for  ( +LeftHandSideExpression+ of +AssignmentExpression+ ) +Statement+
+	 for  ( var +ForBinding+ of +AssignmentExpression+ ) +Statement+
+	 for  ( +LexicalDeclaration+ +Expression+ of +AssignmentExpression+ ) +Statement+
 
-ForDeclaration  := 
+ForDeclaration  :=
 	+LetOrConst+ +ForBinding+
 
-ForBinding  := 
+ForBinding  :=
 	+BindingIdentifier+
 	+BindingPattern+
 
-ContinueStatement  := 
+ContinueStatement  :=
 	 continue;
 	 continue  +LabelIdentifier+;
 
-BreakStatement  := 
+BreakStatement  :=
 	 break;
 	 break +LabelIdentifier+ ;
 
-ReturnStatement  := 
+ReturnStatement  :=
 	 return ;
 	 return +Expression+ ;
 
-WithStatement  := 
+WithStatement  :=
 	 with  ( +Expression+ ) +Statement+
 
-SwitchStatement  := 
+SwitchStatement  :=
 	 switch  ( +Expression+ ) +CaseBlock+
 
 
-CaseBlock  := 
+CaseBlock  :=
 	 {  +CaseClauses+ }
 	 {  +CaseClauses+ +DefaultClause+ +CaseClauses+ }
 
-CaseClauses  := 
+CaseClauses  :=
 	+CaseClause+
 	+CaseClauses+ +CaseClause+
 
-CaseClause  := 
+CaseClause  :=
 	 case +Expression+ : +StatementList+
 
-DefaultClause  := 
+DefaultClause  :=
 	 default  : +StatementList+
 
-LabelledStatement  := 
+LabelledStatement  :=
 	+LabelIdentifier+  :  +LabelledItem+
 
-LabelledItem  := 
+LabelledItem  :=
 	+Statement+
 	+FunctionDeclaration+
 
-ThrowStatement  := 
+ThrowStatement  :=
 	 throw +Expression+ ;
 
-TryStatement  := 
+TryStatement  :=
 	 try  +Block+ +Catch+
 	 try  +Block+ +Finally+
 	 try  +Block+ +Catch+ finally
 
-Catch  := 
+Catch  :=
 	 catch  ( +CatchParameter+ ) +Block+
 
-Finally  := 
+Finally  :=
 	 finally +Block+
 
-CatchParameter  := 
+CatchParameter  :=
 	+BindingIdentifier+
 	+BindingPattern+
 
-DebuggerStatement  := 
+DebuggerStatement  :=
 	 debugger;
 
-FunctionDeclaration  := 
+FunctionDeclaration  :=
 	 function  +BindingIdentifier+ ( +FormalParameters+ ) { +FunctionBody+ }
 
-FunctionExpression  := 
+FunctionExpression  :=
 	 function  +BindingIdentifier+ ( +FormalParameters+ ) { +FunctionBody+ }
 
-StrictFormalParameters  := 
+StrictFormalParameters  :=
 	+FormalParameters+
 
-FormalParameters  := 
+FormalParameters  :=
 	+FormalParameterList+
 
-FormalParameterList  := 
+FormalParameterList  :=
 	+FunctionRestParameter+
 	+FormalsList+
 	+FormalsList+ , +FormalParameter+
 
-FormalsList  := 
+FormalsList  :=
 	+FormalParameter+
 	+FormalsList+ , +FormalParameter+
 
-FunctionRestParameter  := 
+FunctionRestParameter  :=
 	+BindingRestElement+
 
-FormalParameter  := 
+FormalParameter  :=
 	+BindingElement+
 
-FunctionBody  := 
+FunctionBody  :=
 	+FunctionStatementList+
 
-FunctionStatementList  := 
+FunctionStatementList  :=
 	+StatementList?+
 
-ArrowFunction  := 
+ArrowFunction  :=
 	+ArrowParameters+  =>  +ConciseBody+
 
-ArrowParameters  := 
+ArrowParameters  :=
 	+BindingIdentifier+
 	+CoverParenthesizedExpressionAndArrowParameterList+
 
-ConciseBody  := 
+ConciseBody  :=
 	+AssignmentExpression+
 	+{+FunctionBody+}+
 
-ArrowFormalParameters  := 
+ArrowFormalParameters  :=
 	 ( +StrictFormalParameters+ )
 
-MethodDefinition  := 
+MethodDefinition  :=
 	+PropertyName+  ( +StrictFormalParameters+ ) { +FunctionBody+ }
 
-GeneratorMethod := 
-    get  +PropertyName+ ( ){ +FunctionBody+ } 
+GeneratorMethod :=
+    get  +PropertyName+ ( ){ +FunctionBody+ }
     set  +PropertyName+ ( +PropertySetParameterList+ ) { +FunctionBody+ }
 
-PropertySetParameterList  := 
+PropertySetParameterList  :=
 	+FormalParameter+
 
-GeneratorMethod  := 
+GeneratorMethod  :=
 	 *  +PropertyName+ ( +StrictFormalParameters+ ){ GeneratorBody}
 
 
-GeneratorDeclaration  := 
+GeneratorDeclaration  :=
 	 function  * BindingIdentifier ( FormalParameters ){ GeneratorBody }
-     function  * ( +FormalParameters+ ) { +GeneratorBody+ } 
+	 function  * ( +FormalParameters+ ) { +GeneratorBody+ }
 
-GeneratorExpression  := 
+GeneratorExpression  :=
 	 function  * +BindingIdentifier+ ( +FormalParameters+ ) { +GeneratorBody+ }
 
 
-GeneratorBody  := 
+GeneratorBody  :=
 	+FunctionBody+
 
-YieldExpression  := 
-	 yield 
-     yield  +AssignmentExpression+
-     yield  +AssignmentExpression+
+YieldExpression  :=
+	 yield
+	 yield  +AssignmentExpression+
+	 yield  +AssignmentExpression+
 
-ClassDeclaration  := 
+ClassDeclaration  :=
 	 class  +BindingIdentifier+ +ClassTail+
-     class +ClassTail+
+	 class +ClassTail+
 
-ClassExpression  := 
+ClassExpression  :=
 	 class  +BindingIdentifier+ +ClassTail+
 
-ClassTail  := 
+ClassTail  :=
 	+ClassHeritage+  {  +ClassBody+ }
 
-ClassHeritage  := 
+ClassHeritage  :=
 	 extends  +LeftHandSideExpression+
 
-ClassBody  := 
+ClassBody  :=
 	+ClassElementList+
 
-ClassElementList  := 
+ClassElementList  :=
 	+ClassElement+
-    classElementList 
-    +ClassElement+ 
+    classElementList
+    +ClassElement+
 
-ClassElement  := 
+ClassElement  :=
 	+MethodDefinition+
-    static  +MethodDefinition+; 
+    static  +MethodDefinition+;
 
-script  := 
+script  :=
 	+ScriptBody+
 
-ScriptBody  := 
+ScriptBody  :=
 	+StatementList+
 
-Module  := 
+Module  :=
 	+ModuleBody?+
 
-ModuleBody  := 
+ModuleBody  :=
 	+ModuleItemList+
 
-ModuleItemList  := 
+ModuleItemList  :=
 	+ModuleItem+
-    +ModuleItemList+ +ModuleItem+ 
+    +ModuleItemList+ +ModuleItem+
 
-ModuleItem  := 
+ModuleItem  :=
 	+ImportDeclaration+
     +ExportDeclaration+
     +StatementListItem+
 
-ImportDeclaration  := 
+ImportDeclaration  :=
 	 import +ImportClause+ +FromClause+;
-     import +ModuleSpecifier+ ;
+	 import +ModuleSpecifier+ ;
 
-ImportClause  := 
+ImportClause  :=
 	+ImportedDefaultBinding+
-    +NameSpaceImport+  
+    +NameSpaceImport+
     +NamedImports+
     +ImportedDefaultBinding+ ,+NameSpaceImport+
-    +ImportedDefaultBinding+ ,+NamedImports+ 
+    +ImportedDefaultBinding+ ,+NamedImports+
 
-ImportedDefaultBinding  := 
+ImportedDefaultBinding  :=
 	+ImportedBinding+
 
-NameSpaceImport  := 
+NameSpaceImport  :=
 	 *  "as" +ImportedBinding+
 
-NamedImports  := 
+NamedImports  :=
 	 {  }
 
-FromClause  := 
+FromClause  :=
 	 from  +ModuleSpecifier+
 
-ImportsList  := 
+ImportsList  :=
 	+ImportSpecifier+
     +ImportsList+  , +ImportSpecifier+
 
-ImportSpecifier  := 
+ImportSpecifier  :=
 	+ImportedBinding+
     +IdentifierName+ as +ImportedBinding+
 
-ModuleSpecifier  := 
+ModuleSpecifier  :=
 	+StringLiteral+
 
-ImportedBinding  := 
+ImportedBinding  :=
 	+BindingIdentifier+
 
-ExportDeclaration  := 
+ExportDeclaration  :=
 	 export  * +FromClause+ ;
-     export  +ExportClause+ +FromClause+ ;
-     export  +ExportClause+ ; 
-     export  +VariableStatement+;
-     export  +Declaration+ 
-     export  default +HoistableDeclaration+  
-     export  default +ClassDeclaration+
-     export  default +AssignmentExpression+ ; 
+	 export  +ExportClause+ +FromClause+ ;
+	 export  +ExportClause+ ;
+	 export  +VariableStatement+;
+	 export  +Declaration+
+	 export  default +HoistableDeclaration+
+	 export  default +ClassDeclaration+
+	 export  default +AssignmentExpression+ ;
 
-ExportClause  := 
+ExportClause  :=
 	 {  }
-     {  +ExportList+ }  
-     {  +ExportList+ }
+	 {  +ExportList+ }
+	 {  +ExportList+ }
 
-ExportList  := 
+ExportList  :=
 	+ExportSpecifier+
     +ExportsList+  ,  +ExportSpecifier+
 
-ExportSpecifier  := 
+ExportSpecifier  :=
 	+IdentifierName+
-    +IdentifierName+  as  +IdentifierName+ 
+    +IdentifierName+  as  +IdentifierName+
 
-StringNumericLiteral  := 
+StringNumericLiteral  :=
 	+StrWhiteSpace+
-    +StrWhiteSpace+ +StrNumericLiteral+ +StrWhiteSpace+ 
+    +StrWhiteSpace+ +StrNumericLiteral+ +StrWhiteSpace+
 
-StrWhiteSpace  := 
+StrWhiteSpace  :=
 	+StrWhiteSpaceChar+ +StrWhiteSpace+
 
-StrWhiteSpaceChar  := 
+StrWhiteSpaceChar  :=
 	+WhiteSpace+
-    +LineTerminator+ 
+    +LineTerminator+
 
-StrNumericLiteral  := 
+StrNumericLiteral  :=
 	+StrDecimalLiteral+
     +BinaryIntegerLiteral+
-    +OctalIntegerLiteral+ 
+    +OctalIntegerLiteral+
     +HexIntegerLiteral+
 
-StrDecimalLiteral := 
+StrDecimalLiteral :=
 	+StrUnsignedDecimalLiteral+
     ++StrUnsignedDecimalLiteral+
-    -+StrUnsignedDecimalLiteral+ 
+    -+StrUnsignedDecimalLiteral+
 
-StrUnsignedDecimalLiteral  := 
+StrUnsignedDecimalLiteral  :=
 	 +Infinity+
-     +DecimalDigits+.+DecimalDigits+ 
-     .DecimalDigits 
-     DecimalDigits
+	 +DecimalDigits+.+DecimalDigits+
+	 .DecimalDigits
+	 DecimalDigits
 
-uri  := 
+uri  :=
 	+uriCharacters+
 
-uriCharacters  := 
+uriCharacters  :=
 	+uriCharacter+ +uriCharacters+
 
-uriCharacter  := 
+uriCharacter  :=
 	+uriReserved+
     +uriUnescaped+
     +uriEscaped+
@@ -1181,16 +1181,16 @@ uriReserved  :=
     ,
     +
 
-uriUnescaped  := 
+uriUnescaped  :=
 	+uriAlpha+
     +DecimalDigit+
     +uriMark+
 
-uriEscaped  := 
+uriEscaped  :=
 	 % +HexDigit+ +HexDigit+
 
 
-uriAlpha  := 
+uriAlpha  :=
 	a
     b
     c
@@ -1244,8 +1244,8 @@ uriAlpha  :=
     Y
     Z
 
-uriMark  := 
-	-
+uriMark  :=
+		-
     _
     .
     !

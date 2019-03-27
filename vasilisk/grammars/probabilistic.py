@@ -22,6 +22,10 @@ class ProbabilisticGrammar(DharmaGrammar):
 
         current_dir = os.path.dirname(os.path.realpath(__file__))
         templates = os.path.join(current_dir, 'templates')
+
+        with open(os.path.join(templates, 'values.dg'), 'r') as f:
+            self.all_values = f.read()
+
         self.values = self.parse(os.path.join(templates, 'values.dg'))
         self.controls = self.parse(os.path.join(templates, 'controls.dg'))
 
@@ -80,7 +84,8 @@ class ProbabilisticGrammar(DharmaGrammar):
 
         with open(self.grammar_path, 'a') as f:
             f.write('%section% := value\n\n')
-            f.write(f'value :=\n\t{self.values[value]}\n\n')
+            f.write(self.all_values)
+            f.write(f'\nvalue :=\n\t{self.values[value]}\n\n')
 
         control = self.choice(self.controls_probability)
 
