@@ -1,5 +1,3 @@
-import math
-import os
 import redis
 
 
@@ -16,8 +14,5 @@ class CoverageRecorder:
         comb_str += ','.join(comb['controls'])
         return comb_str
 
-    def record_comb(self, comb):
-        self.redis.rpush('combinations', self.comb_fmt(comb))
-
-    def record_case(self, case):
-        pass
+    def record(self, case):
+        self.redis.incr('count')

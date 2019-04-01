@@ -9,7 +9,7 @@ from functools import reduce
 
 from coverage.iterative import handler
 
-from dharma_grammar import DharmaGrammar
+from .dharma_grammar import DharmaGrammar
 
 
 def nCk(n, k):
@@ -38,7 +38,7 @@ class IterativeGrammar(DharmaGrammar):
         self.actions = self.parse(os.path.join(templates, 'actions.dg'))
         self.controls = self.parse(os.path.join(templates, 'controls.dg'))
 
-        self.coverage = handler.CoverageHandler(self.actions, self.controls)
+        self.coverage = handler.CoverageHandler()
 
         self.action_depth = 5
         self.control_depth = 1
@@ -83,12 +83,12 @@ class IterativeGrammar(DharmaGrammar):
 
     def load_rules(self):
         while True:
-            self.curr_actions = random.sample(self.actions.keys(),
+            self.actions_pool = random.sample(self.actions.keys(),
                                               self.action_size)
-            self.curr_controls = random.sample(self.controls.keys(),
+            self.controls_pool = random.sample(self.controls.keys(),
                                                self.control_size)
 
-            if self.coverage.unique(self.curr_actions, self.curr_controls):
+            if self.coverage.unique(self.actions_pool, self.controls_pool):
                 break
 
     def generate(self):
@@ -97,17 +97,22 @@ class IterativeGrammar(DharmaGrammar):
                 time.sleep(0.5)
 
             self.load_rules()
+            self.coverage.reset(self.actions_pool, self.controls_pool)
             self.curr_comb = 0
 
-        for i, action in enumerate(self.curr_actions):
-            if action >= self.action_size:
-                for j in range(i):
-                    self.curr_actions[j] = 0
-                if i == self.curr_action_depth:
-                    self.curr_action_depth += 1
-                    self.curr_actions.append(0)
-                else:
-                    self.curr_actions[i + 1] += 1
+        changes = True
+        while changes:
+            for i, action in enumerate(self.curr_actions):
+                if action >= self.action_size:
+                    for j in range(i):
+                        self.curr_actions[j] = 0
+                    if i == self.curr_action_depth:
+                        self.curr_action_depth += 1
+                        self.curr_actions.append(0)
+                    else:
+                        self.curr_actions[i + 1] += 1
+                        break
+            changes = False
 
         headers = [
             '%%% Generated Grammar',
@@ -131,13 +136,15 @@ class IterativeGrammar(DharmaGrammar):
             for i, action in enumerate(actions):
                 f.write(f'\naction{i} :=\n\t{actions[action]}\n\n')
 
-        control = self.controls_probability[0]
+        control = list(self.controls.keys())[0]
 
         with open(self.grammar_path, 'a') as f:
             f.write('%section% := variance\n\n')
             f.write(f'variance :=\n\t{self.controls[control]}\n\n')
 
         self.create_dharma(self.grammars)
+
+        self.curr_actions[0] += 1
 
         return ((action, control), super().generate())
 
