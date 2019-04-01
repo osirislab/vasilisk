@@ -4,7 +4,7 @@ import struct
 
 import dharma
 
-from base import BaseGrammar
+from .base import BaseGrammar
 
 
 class DharmaGrammar(BaseGrammar):

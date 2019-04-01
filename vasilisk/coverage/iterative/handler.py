@@ -28,6 +28,10 @@ class CoverageHandler(object):
 
         return True
 
+    def reset(self, actions, controls):
+        self.redis.set('count', 0)
+        self.redis.rpush('combinations', self.comb_fmt(actions, controls))
+
 
 if __name__ == '__main__':
     opt = CoverageHandler()
