@@ -9,6 +9,9 @@ class CoverageRecorder:
         self.redis = redis.Redis(host='localhost', port=6379, db=0,
                                  decode_responses=True)
 
+        self.max_score = 50
+        self.min_score = 5
+
     def parse(self, turbo_json):
         with open(turbo_json, 'r') as f:
             turbo = json.loads(f.read())
@@ -65,10 +68,18 @@ class CoverageRecorder:
         count = int(self.redis.get('count'))
         average = float(cumulative_total) / count
 
-        reward = math.floor(math.sqrt(abs(total - average)))
+        reward = math.floor(math.sqrt(abs(total - average))) - 2
 
         value = f'value:{grammars[0]}'
         control = f'control:{grammars[1]}'
 
-        self.redis.set(value, str(int(self.redis.get(value)) + reward))
-        self.redis.set(control, str(int(self.redis.get(control)) + reward))
+        new_value = int(self.redis.get(value)) + reward
+        new_value = max(new_value, self.min_score)
+        new_value = min(new_value, self.max_score)
+
+        new_control = int(self.redis.get(control)) + reward
+        new_control = max(new_control, self.min_score)
+        new_control = min(new_control, self.max_score)
+
+        self.redis.set(value, str(new_value))
+        self.redis.set(control, str(new_control))

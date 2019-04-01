@@ -1,24 +1,19 @@
-Grammer  :=
-	+Statement+
+string :=
+	'+common:text+'
 
-SourceCharacter  :=
-	x000000
-  x10FFFF
+math :=
+  +common:int+ +common:sign+ +common:int+
+	'+common:text+' +common:sign+ +common:int+
+  '+common:text+'+ +common:sign+ '+common:text+'
+  '+common:text+' +common:sign+ '+common:text+'
 
-InputElementDiv  :=
-	+WhiteSpace+
-	+LineTerminator+
-	+CommonToken+
-	+DivPunctuator+
-	+RightBracePunctuator+
+negative_number :=
+    -+common:positive_integer+
 
-InputElementRegExp  :=
-	+WhiteSpace+
-	+LineTerminator+
-	+CommonToken+
-	+RightBracePunctuator+
-	+RegularExpressionLiteral+
+intArgs :=
+    null
 
+<<<<<<< HEAD
 InputElementRegExpOrTemplateTail  :=
 	+WhiteSpace+
 	+LineTerminator+
@@ -1176,3 +1171,8 @@ uriMark  :=
     (
     )
     ]
+
+builtinMath :=
+    Math.PI
+    Math.E
+		Math.LN2

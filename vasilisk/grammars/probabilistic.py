@@ -2,7 +2,7 @@ import logging
 import os
 import random
 
-from coverage import handler
+from coverage.probabilistic import handler
 
 from .dharma_grammar import DharmaGrammar
 
