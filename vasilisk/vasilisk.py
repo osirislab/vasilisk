@@ -114,9 +114,9 @@ def main(fuzzer, d8, procs, count, crashes, tests, debug, verbose):
     driver = Vasilisk(
         fuzzer, d8, procs, count, crashes, tests, debug
     )
-    for i in range(1):
-        print(driver.grammar.generate()[1])
-    #driver.start()
+    #for i in range(1):
+    #    print(driver.grammar.generate()[1])
+    driver.start()
 
 if __name__ == "__main__":
     main()
