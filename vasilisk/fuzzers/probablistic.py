@@ -5,7 +5,7 @@ import uuid
 
 from datetime import datetime
 
-from coverage import recorder
+from coverage.probabilistic import recorder
 
 from .base import BaseFuzzer
 
