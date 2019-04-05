@@ -19,6 +19,10 @@ class Vasilisk:
         self.procs = procs
         self.count = count
         self.rate_limit = min(1000 * self.procs, self.count)
+
+        if count < 0:
+            self.rate_limit = 1000 * self.procs
+
         self.generated = 0
 
         self.grammar = grammars.grammars[fuzzer]()
@@ -39,7 +43,7 @@ class Vasilisk:
             os.makedirs(tests)
 
     def generate(self):
-        while self.generated < self.count:
+        while self.generated < self.count or self.count < 0:
             grammar = self.grammar.generate()
             self.queue.put(grammar)
             self.generated += 1
@@ -104,7 +108,6 @@ class Vasilisk:
               test inputs to specified test folder')
 @click.option('--verbose', is_flag=True, default=False,
               help='print more stuff')
-
 def main(fuzzer, d8, procs, count, crashes, tests, debug, verbose):
     if verbose:
         logging.basicConfig(level=logging.DEBUG)
@@ -114,9 +117,8 @@ def main(fuzzer, d8, procs, count, crashes, tests, debug, verbose):
     driver = Vasilisk(
         fuzzer, d8, procs, count, crashes, tests, debug
     )
-    #for i in range(1):
-    #    print(driver.grammar.generate()[1])
     driver.start()
+
 
 if __name__ == "__main__":
     main()

@@ -4,3 +4,4 @@ venv/
 case*
 turbo.cfg
 turbo/
+crashes/

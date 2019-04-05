@@ -50,7 +50,6 @@ class IterativeFuzzer(BaseFuzzer):
     def fuzz(self, test_case, thread):
         unique_id = None
         grammar, test_case = test_case
-
         if self.debug:
             curr_time = datetime.now().strftime('%Y.%m.%d-%H:%M:%S')
             unique_id = str(uuid.uuid4()) + '_' + curr_time

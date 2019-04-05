@@ -3,17 +3,9 @@ import os
 import random
 import time
 
-from operator import mul
-from fractions import Fraction
-from functools import reduce
-
 from coverage.iterative import handler
 
 from .dharma_grammar import DharmaGrammar
-
-
-def nCk(n, k):
-    return int(reduce(mul, (Fraction(n-i, i+1) for i in range(k)), 1))
 
 
 class IterativeGrammar(DharmaGrammar):
@@ -46,21 +38,14 @@ class IterativeGrammar(DharmaGrammar):
         self.action_size = 5
         self.control_size = 1
 
-        self.total_possible = 0
-        for i in range(self.action_size):
-            self.total_possible += nCk(self.action_size, i)
+        self.saved_req = 100
 
-        total_controls = 0
-        for i in range(self.control_size):
-            total_controls += nCk(self.control_size, i)
+        self.curr_combs = 0
 
-        self.total_possible *= total_controls
+        self.curr_actions = self.get_actions()
 
-        self.curr_comb = 0
-        self.curr_actions = []
-        self.curr_controls = []
-        self.curr_action_depth = 0
-        self.curr_control_depth = 0
+        self.actions_pool = []
+        self.controls_pool = []
 
         self.grammars = [self.grammar_path]
         super().__init__(self.grammars)
@@ -91,28 +76,39 @@ class IterativeGrammar(DharmaGrammar):
             if self.coverage.unique(self.actions_pool, self.controls_pool):
                 break
 
+    def get_actions(self):
+        self.load_rules()
+        actions = [0]
+
+        while len(actions) <= self.action_depth:
+            yield actions
+            actions[0] += 1
+            for i in range(len(actions) - 1):
+                if actions[i] >= self.action_size:
+                    actions[i] = 0
+                    actions[i + 1] += 1
+            self.curr_combs += 1
+
+            if actions[-1] >= self.action_size:
+                actions = [0 for _ in range(len(actions) + 1)]
+
+        yield None
+
     def generate(self):
-        if self.curr_comb >= self.total_possible:
-            while self.coverage.get_count() < self.total_possible:
+        actions = next(self.curr_actions)
+        if actions is None:
+            while self.coverage.get_count() < self.curr_combs:
                 time.sleep(0.5)
 
-            self.load_rules()
+            self.coverage.score(self.actions_pool, self.controls_pool,
+                                self.action_depth, self.control_depth)
             self.coverage.reset(self.actions_pool, self.controls_pool)
-            self.curr_comb = 0
+            self.curr_combs = 0
 
-        changes = True
-        while changes:
-            for i, action in enumerate(self.curr_actions):
-                if action >= self.action_size:
-                    for j in range(i):
-                        self.curr_actions[j] = 0
-                    if i == self.curr_action_depth:
-                        self.curr_action_depth += 1
-                        self.curr_actions.append(0)
-                    else:
-                        self.curr_actions[i + 1] += 1
-                        break
-            changes = False
+            # if self.coverage.get_saved() > self.saved_req:
+
+            self.curr_actions = self.get_actions()
+            actions = next(self.curr_actions)
 
         headers = [
             '%%% Generated Grammar',
@@ -128,13 +124,20 @@ class IterativeGrammar(DharmaGrammar):
 
             f.write('\n')
 
-        actions = [self.actions[i] for i in self.curr_actions]
+        actions = [self.actions_pool[i] for i in actions]
 
         with open(self.grammar_path, 'a') as f:
-            f.write('%section% := action\n\n')
-            f.write(self.all_actions)
+            f.write('%section% := value\n\n')
+            f.write(self.all_actions + '\n')
             for i, action in enumerate(actions):
-                f.write(f'\naction{i} :=\n\t{actions[action]}\n\n')
+                f.write(f'action{i} :=\n\t{self.actions[action]}\n\n')
+
+            f.write('value :=\n\t')
+
+            for i in range(len(actions)):
+                f.write(f'+action{i}+;')
+
+            f.write('\n\n')
 
         control = list(self.controls.keys())[0]
 
@@ -144,11 +147,4 @@ class IterativeGrammar(DharmaGrammar):
 
         self.create_dharma(self.grammars)
 
-        self.curr_actions[0] += 1
-
-        return ((action, control), super().generate())
-
-
-if __name__ == '__main__':
-    iterative = IterativeGrammar()
-    print(iterative.load_rules())
+        return ((actions, [control]), super().generate())

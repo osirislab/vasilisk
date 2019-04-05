@@ -43,8 +43,3 @@ class CoverageHandler(object):
             probabilities[rule] = int(self.redis.get(control))
 
         return probabilities
-
-
-if __name__ == '__main__':
-    opt = CoverageHandler()
-    opt.print_records()
