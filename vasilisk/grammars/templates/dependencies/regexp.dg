@@ -27,6 +27,15 @@ patternchar :=
     \b
     \B
     \+common:int+
+    (?:+pattern+)
+    +pattern+*
+    +pattern++
+    +pattern+?
+    +pattern+{+common:int+}
+    +pattern+{+common:int+,}
+    +pattern+{+common:int+,+common:int+}
+    +pattern+(?=+pattern+)
+    +pattern+(?!+pattern+)
 
 pattern :=
     %repeat%(+patternchar+, "")

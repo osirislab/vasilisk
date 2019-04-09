@@ -60,5 +60,6 @@ arrtype :=
     new Proxy(+arrtype+, +proxy:proxyhandler+)
 
 %section% := variable
+
 arr :=
     var @arr@; try { @arr@ = +arrtype+; } catch (e) {}

@@ -3,7 +3,7 @@
 %%% We could probably generate this from:
 %%% http://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 %%% But for now im just using some hardcoded examples :/
-locale_str := 
+locale_str :=
     "en"
     "en-US"
     "hi"
@@ -233,7 +233,7 @@ collator_usage :=
     "sort"
     "search"
 
-collator_sensitivity := 
+collator_sensitivity :=
     "base"
     "accent"
     "case"
@@ -257,12 +257,12 @@ collator_options :=
 
 collator :=
     (new Intl.Collator(+locale_str+, +collator_options+))
-    
+
 collator_statement :=
     +collator+.compare("+common:character+", "+common:character+")
     +collator+.resolvedOptions()
 
-date_time_format := 
+date_time_format :=
     (new Intl.DateTimeFormat(+locale_str+))
 
 date_time_format_statement :=
@@ -326,7 +326,7 @@ number_format_option_pairs :=
 number_format_options :=
     { %repeat%(+number_format_option_pairs+, ",") }
 
-number_format := 
+number_format :=
     (new Intl.NumberFormat(+locale_str+, +number_format_options+))
 
 number_format_statement :=
@@ -354,7 +354,7 @@ plural_rules_statement :=
     +plural_rules+.resolvedOptions()
     +plural_rules+.select(+common:number+)
 
-statement := 
+statement :=
     Intl.getCanonicalLocales()
     +collator_statement+
     +date_time_format_statement+
