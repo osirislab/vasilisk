@@ -1,0 +1,24 @@
+%section% := value
+
+symboltype :=
+    Symbol.iterator
+    Symbol.match
+    Symbol.replace
+    Symbol.search
+    Symbol.split
+    Symbol.hasInstance
+    Symbol.isConcatSpreadable
+    Symbol.unscopables
+    Symbol.species
+    Symbol.toPrimitive
+    Symbol.toStringTag
+    new Proxy(+symboltype+, +proxy:proxyhandler+)
+
+statement :=
+    !symbol!.toString()
+    !symbol!.valueOf()
+
+%section% := variable
+
+symbol :=
+    var @symbol@ = +symboltype+;

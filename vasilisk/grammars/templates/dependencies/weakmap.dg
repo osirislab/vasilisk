@@ -1,0 +1,26 @@
+%section% := value
+
+keypair :=
+    [+value:valtype+, +value:valtype+]
+
+weakmaparg :=
+    +value:nulls+
+    [%repeat%(+keypair+, ", ")]
+
+weakmaptype :=
+    (new WeakMap(+weakmaparg+))
+
+any_weakmap :=
+    !weakmap!
+    +weakmaptype+
+
+statement :=
+    +any_weakmap+.delete(+value:valtype+)
+    +any_weakmap+.get(+value:valtype+)
+    +any_weakmap+.has(+value:valtype+)
+    +any_weakmap+.set(+value:valtype+, +value:valtype+)
+
+%section% := variable
+
+weakmap :=
+    var @weakmap@; try { @weakmap@ = +weakmaptype+; } catch (e) {}

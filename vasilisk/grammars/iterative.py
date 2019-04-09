@@ -27,6 +27,12 @@ class IterativeGrammar(DharmaGrammar):
         with open(os.path.join(templates, 'actions.dg'), 'r') as f:
             self.all_actions = f.read()
 
+        dependencies = os.path.join(templates, 'dependencies')
+        self.grammar_deps = [
+            os.path.join(dependencies, grammar)
+            for grammar in os.listdir(os.path.join(dependencies))
+        ]
+
         self.actions = self.parse(os.path.join(templates, 'actions.dg'))
         self.controls = self.parse(os.path.join(templates, 'controls.dg'))
 
@@ -47,7 +53,7 @@ class IterativeGrammar(DharmaGrammar):
         self.actions_pool = []
         self.controls_pool = []
 
-        self.grammars = [self.grammar_path]
+        self.grammars = self.grammar_deps + [self.grammar_path]
         super().__init__(self.grammars)
 
     def parse(self, grammar_path):

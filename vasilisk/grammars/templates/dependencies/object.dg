@@ -1,0 +1,39 @@
+%%% JSObjects
+
+%section% := value
+
+any_object :=
+    !obj!
+    +value:valtype+
+
+
+statement :=
+    Object.assign(+any_object+, %repeat%(+objtype+, ", "))
+    @obj@ = Object.create(+any_object+)
+    Object.defineProperty(+any_object+, "+common:text+", +objtype+)
+    @array:arr@ = Object.entries(+any_object+)
+    Object.freeze(+any_object+)
+    Object.getOwnPropertyDescriptor(+any_object+, "+common:text+")
+    Object.is(+any_object+, +any_object+)
+    Object.isExtensible(+any_object+)
+    Object.isFrozen(+any_object+)
+    Object.isSealed(+any_object+)
+    @array:arr@ = Object.keys(+any_object+)
+    Object.preventExtentions(+any_object+)
+    Object.seal(+any_object+)
+    Object.setPrototypeOf(+any_object+, +any_object+)
+    @array:arr@ = Object.values(+any_object+)
+    !obj![+value:valtype+] = +driver:statement_notry+
+    !obj![+common:decimal_number+] = +value:valtype+
+
+name_value_pair :=
+    "+common:text+": +value:valtype+
+
+objtype :=
+    {%repeat%(+name_value_pair+, ",")}
+    new Proxy({%repeat%(+name_value_pair+, ",")}, +proxy:proxyhandler+)
+
+%section% := variable
+
+obj :=
+    var @obj@; try { @obj@ = +objtype+; } catch (e) {}

@@ -21,15 +21,22 @@ class VerifyGrammar(DharmaGrammar):
         current_dir = os.path.dirname(os.path.realpath(__file__))
         templates = os.path.join(current_dir, 'templates')
 
+        dependencies = os.path.join(templates, 'dependencies')
+        self.grammar_deps = [
+            os.path.join(dependencies, grammar)
+            for grammar in os.listdir(os.path.join(dependencies))
+        ]
+
         with open(os.path.join(templates, 'actions.dg'), 'r') as f:
             self.all_actions = f.read()
 
         self.actions = self.parse(os.path.join(templates, 'actions.dg'))
         self.controls = self.parse(os.path.join(templates, 'controls.dg'))
+        self.variables = self.parse(os.path.join(templates, 'variables.dg'))
 
         self.curr_action = 0
 
-        self.grammars = [self.grammar_path]
+        self.grammars = self.grammar_deps + [self.grammar_path]
         super().__init__(self.grammars)
 
     def parse(self, grammar_path):
@@ -71,8 +78,13 @@ class VerifyGrammar(DharmaGrammar):
 
         with open(self.grammar_path, 'a') as f:
             f.write('%section% := value\n\n')
-            f.write(self.all_actions)
-            f.write(f'\nvalue :=\n\t{self.actions[action]}\n\n')
+            f.write(f'action :=\n\t{self.actions[action]}\n\n')
+
+        variable = list(self.variables.keys())[0]
+
+        with open(self.grammar_path, 'a') as f:
+            f.write('%section% := variable\n\n')
+            f.write(f'variable :=\n\tvar @variable@={self.variables[variable]}\n\n')
 
         control = list(self.controls.keys())[0]
 
@@ -83,4 +95,10 @@ class VerifyGrammar(DharmaGrammar):
         self.create_dharma(self.grammars)
         self.curr_action += 1
 
-        return ((action, control), super().generate())
+        try:
+            generated = super().generate()
+        except RecursionError as e:
+            self.logger.info(f'invalid rule (recursion): {action}')
+            sys.exit(1)
+
+        return ((action, control), generated)

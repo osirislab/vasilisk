@@ -1,0 +1,31 @@
+%section% := value
+
+statement_notry :=
+    +object:statement+
+    +array:statement+
+    +math:statement+
+    +date:statement+
+    +regexp:statement+
+    +intl:statement+
+    +map:statement+
+    +set:statement+
+    +buffer:statement+
+    +boolean:statement+
+    +symbol:statement+
+    +string:statement+
+    +number:statement+
+    +weakmap:statement+
+    +weakset:statement+
+    +reflect:statement+
+    +dataview:statement+
+    +arguments:statement+
+    +globals:statement+
+
+return_statement :=
+    try { return +statement_notry+ } catch (e) {}
+
+statement :=
+    try { +statement_notry+; } catch (e) {}
+
+yield_statement :=
+    try { yield +statement_notry+; } catch (e) {}

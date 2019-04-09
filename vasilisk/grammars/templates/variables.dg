@@ -1,0 +1,6 @@
+regexptype :=
+    new RegExp("+regexp:pattern+", "+regexp:flags+")
+    new RegExp("+regexp:pattern+")
+    RegExp("+regexp:pattern+", "+regexp:flags+")
+    RegExp("+regexp:pattern+")
+    new Proxy(+regexptype+, +proxy:proxyhandler+)

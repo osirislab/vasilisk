@@ -26,6 +26,9 @@ class VerifyFuzzer(BaseFuzzer):
 
         if not self.validate(output):
             self.logger.info(f'invalid rule: {grammar[0]}')
+        else:
+            self.logger.info(f'valid rule: {grammar[0]}')
+            self.logger.info(test_case)
 
     def validate(self, output):
         if output is not None:

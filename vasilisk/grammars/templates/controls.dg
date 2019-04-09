@@ -1,2 +1,2 @@
 LanguageConstructs :=
-    return +value+
+    +action+; return variable1

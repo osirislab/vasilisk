@@ -1,0 +1,59 @@
+%section% := value
+
+simple_callback :=
+    function() { %repeat%(+driver:statement+, ";"); +driver:return_statement+; }
+    function*() { %repeat%(+driver:yield_statement+, ";"); }
+    async function() { %repeat%(+driver:statement+, ";"); +driver:return_statement+; }
+
+%%% TODO: make these more interesting
+one_op_predicate :=
+    function(thing) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
+    async function(thing) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
+
+
+compare_pred :=
+    arg1 < arg2
+    arg1 > arg2
+    arg1 == arg2
+    arg1 != arg2
+    arg1 >= arg2
+    arg1 <= arg2
+
+two_op_compare :=
+    function(arg1, arg2) { %repeat%(+driver:statement+, ";"); return +compare_pred+; }
+    async function(thing) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
+
+find_callback :=
+    function(el, idx, array) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
+    function*() { %repeat%(+driver:yield_statement+, ";"); }
+    async function(thing) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
+
+map_callback :=
+    function (val, index, array) { %repeat%(+driver:statement+, ";"); return +value:valtype+; }
+    function*() { %repeat%(+driver:yield_statement+, ";"); }
+    async function (val, index, array) { %repeat%(+driver:statement+, ";"); return +value:valtype+; }
+
+reduce_callback :=
+    function(acc, currVal, currIdx, arr) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
+    function*() { %repeat%(+driver:yield_statement+, ";"); }
+    async function(acc, currVal, currIdx, arr) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
+
+foreach_callback :=
+    function(key, value, map) { throw 1; }
+    function(key, value, map) { %repeat%(+driver:statement+, ";"); }
+    function*(key, value, map) { %repeat%(+driver:yield_statement+, ";"); }
+    async function(key, value, map) { %repeat%(+driver:statement+, ";"); }
+
+%%% this callback is really complex, so we're jsut doing something simple for now...
+string_replace_callback :=
+    function(match, p1, offset, string) { %repeat%(+driver:statement+, ";"); }
+
+any_callback :=
+    +simple_callback+
+    +one_op_predicate+
+    +two_op_compare+
+    +find_callback+
+    +map_callback+
+    +reduce_callback+
+    +foreach_callback+
+    +string_replace_callback+
