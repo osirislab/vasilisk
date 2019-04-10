@@ -17,7 +17,7 @@ constant :=
     Infinity
     Number.NEGATIVE_INFINITY
 
-num := 
+num :=
     +common:number+
     +constant+
 
@@ -57,7 +57,3 @@ statement :=
     Math.tan(+num+)
     Math.tanh(+num+)
     Math.trunc(+num+)
-
-
-%section% := variable
-

@@ -1,3 +1,4 @@
+import itertools
 import os
 import re
 
@@ -47,22 +48,72 @@ class Grammar(BaseGrammar):
                 out.append((m.start('xref'), m.end('xref')))
         return out
 
-    def parse_xrefs(self):
-        for rule, subrules in self.corpus['actions'].items():
-            for subrule in subrules:
-                xrefs = self.xref(subrule)
-                for xref in xrefs:
-                    xref_l = subrule[:xref[0]-1]
-                    xref_r = subrule[xref[1]+1:]
-                    xref = subrule[xref[0]:xref[1]]
-                    replacements = []
-                    if ':' in xref:
-                        xref_grammar, xref_rule = xref.split(':')
-                        xref_subrules = self.corpus[xref_grammar][xref_rule]
-                        for xref_subrule in xref_subrules:
-                            replacements.append(xref_l + xref_subrule + xref_r)
+    def parse_xref(self, grammar, xref):
+        if ':' in xref:
+            xref_grammar, xref_rule = xref.split(':')
+            if xref_grammar == 'common':
+                return [xref]
+        else:
+            xref_grammar, xref_rule = grammar, xref
 
-                    print(replacements)
+        xref_subrules = self.corpus[xref_grammar][xref_rule]
+        new_subrules = []
+        for xref in xref_subrules:
+            inner_xrefs = self.xref(xref)
+            if not inner_xrefs:
+                new_subrules.append(xref)
+
+            for inner_xref in inner_xrefs:
+                inner_xref = xref[inner_xref[0]:inner_xref[1]]
+                new_subrules += self.parse_xref(xref_grammar, inner_xref)
+
+        return new_subrules
+
+    def parse_xrefs(self, grammar, subrule):
+        xrefs = self.xref(subrule)
+        new_subrules = []
+
+        if not xrefs:
+            return [subrule]
+
+        expanded_rules = []
+        rule_parts = []
+        prev_end = 0
+        for xref in xrefs:
+            rule_parts.append(subrule[prev_end:xref[0]-1])
+            rule_parts.append('{}')
+
+            xref_str = subrule[xref[0]:xref[1]]
+            expanded_rules.append(self.parse_xref(grammar, xref_str))
+
+            prev_end = xref[1] + 1
+
+        rule_parts.append(subrule[xref[1] + 1:])
+
+        products = itertools.product(*expanded_rules)
+
+        for product in products:
+            new_subrules.append(''.join(rule_parts).format(*product))
+
+        return new_subrules
+
+    def unravel(self):
+        for rule, subrules in self.corpus['actions'].items():
+            cumulative_subrules = []
+            for subrule in subrules:
+                new_subrules = self.parse_xrefs('actions', subrule)
+
+                if new_subrules:
+                    cumulative_subrules += new_subrules
+                else:
+                    cumulative_subrules.append(subrule)
+
+            self.corpus['actions'][rule] = cumulative_subrules
+
+        for grammar, rules in self.corpus.items():
+            pass
+
+        print(len(self.corpus['actions']['math']))
 
     def generate(self):
         pass
@@ -83,6 +134,4 @@ if __name__ == '__main__':
     variables = os.path.join(templates, 'variables.dg')
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
-    grammar.parse_xrefs()
-
-    print(grammar.corpus['regexp'])
+    grammar.unravel()
