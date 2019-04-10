@@ -1,24 +1,24 @@
 regex :=
-    !variable!.flags = "+regexp:flags+"
-    !variable!.flags
-    !variable!.global = +common:bool+
-    !variable!.global
-    !variable!.ignoreCase = +common:bool+
-    !variable!.ignoreCase
-    !variable!.multiline = +common:bool+
-    !variable!.multiline
-    !variable!.sticky = +common:bool+
-    !variable!.sticky
-    !variable!.unicode = +common:bool+
-    !variable!.unicode
-    !variable!.exec("+common:text+")
-    !variable!.test("+common:text+")
+    !regexp:regexp!.flags = "+regexp:flags+"
+    !regexp:regexp!.flags
+    !regexp:regexp!.global = +common:bool+
+    !regexp:regexp!.global
+    !regexp:regexp!.ignoreCase = +common:bool+
+    !regexp:regexp!.ignoreCase
+    !regexp:regexp!.multiline = +common:bool+
+    !regexp:regexp!.multiline
+    !regexp:regexp!.sticky = +common:bool+
+    !regexp:regexp!.sticky
+    !regexp:regexp!.unicode = +common:bool+
+    !regexp:regexp!.unicode
+    !regexp:regexp!.exec("+common:text+")
+    !regexp:regexp!.test("+common:text+")
     RegExp.prototype[Symbol.match]("+common:text+")
     RegExp.prototype[Symbol.search]("+common:text+")
     RegExp.prototype[Symbol.split]("+common:text+")
-    !variable!.toString()
-    !variable!.lastIndex
-    !variable!.compile()
-    "+common:text+".split(!variable!)
-    "+common:text+".split(!variable!, +common:int+)
-    !variable!.toSource()
+    !regexp:regexp!.toString()
+    !regexp:regexp!.lastIndex
+    !regexp:regexp!.compile()
+    "+common:text+".split(!regexp:regexp!)
+    "+common:text+".split(!regexp:regexp!, +common:int+)
+    !regexp:regexp!.toSource()
