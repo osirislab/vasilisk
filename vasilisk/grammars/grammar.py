@@ -6,7 +6,7 @@ from base import BaseGrammar
 
 
 class Grammar(BaseGrammar):
-    def __init__(self, grammars):
+    def __init__(self, grammars, repeat=4):
         self.xref_re = r"""(
             (?P<type>\+|!|@)(?P<xref>[a-zA-Z0-9:_]+)(?P=type)|
             %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*"(?P<separator>.*?)")?\s*(,\s*(?P<nodups>nodups))?\s*\)|
@@ -16,6 +16,8 @@ class Grammar(BaseGrammar):
         )"""
 
         self.corpus = {}
+        self.repeat_max = repeat
+        self.max_recursions = 100000
 
         for grammar in grammars:
             grammar_name = os.path.basename(grammar).replace('.dg', '')
@@ -115,8 +117,94 @@ class Grammar(BaseGrammar):
 
         print(len(self.corpus['actions']['math']))
 
-    def generate(self):
-        pass
+    def generate_test(self, grammar_list, name="regexp", path = None):
+        """
+        loads a list of grammars and checks regex to output code
+        """
+        if name not in self.corpus:
+            self.corpus[name] = self.parse(path)
+
+        test_case = ""
+
+        for grammar in grammar_list:
+            rule, index = map(lambda x: int(x) if x.isnumeric() else x,
+                    grammar.split(":"))
+            if index > len(self.corpus[name][rule]):
+                raise ValueError(f"grammar index is too high for {rule}")
+
+            test_case += f"{self.generate(self.corpus[name][rule][index], 'regexp')};"
+            print(test_case)
+            break
+
+    def generate(self, rule,  grammar, cache = None, recurse_count = 0):
+        out, end = [], 0
+        if cache is None:
+            cache = {}
+
+        for k in cache.items():
+            print(k)
+
+
+
+        if recurse_count == self.max_recursions:
+            return False
+
+        if rule in cache:
+            return cache[rule]
+
+        token = rule.replace("\\n", "\n")
+        for m in re.finditer(self.xref_re, token, re.VERBOSE | re.DOTALL):
+            if m.start(0) > end:
+                end = m.end(0)
+            elif m.group("repeat") is not None:
+                repeat, separator, nodups = m.group("repeat", "separator", "nodups")
+                #print(repeat, separator, nodups)
+                if separator is None:
+                    separator = ""
+                if nodups is None:
+                    nodups = ""
+
+                if ":" in separator:
+                    grammar = separator.split(":")[0]
+
+                for i in range(self.repeat_max):
+                    res = self.generate(repeat, grammar, cache, recurse_count + 1)
+                    if res:
+                        out.append(res)
+                    else:
+                        # use Roy's code to use another grammar index instead of the
+                        # one specified previously
+                        pass
+
+                cache[rule] = separator.join(out)
+                return cache[rule]
+
+            elif m.group("choices") is not None:
+                choices = m.group("choices")
+            else:
+                if "+" in rule:
+                    if ":" in rule:
+                        grammar = rule.split(":")[0].strip("+")
+                        gramm = rule.split(":")[1].strip("+")
+                    else:
+                        gramm = rule.strip("+")
+                    print(grammar, gramm, self.corpus[grammar][gramm][7] )
+
+                    gramm = self.generate(self.corpus[grammar][gramm][7], grammar, cache, recurse_count + 1)
+                else:
+                    gramm = rule
+                    # have to use Roy's code that covers basic cases and sucessfully
+                    # parse and make the grammar assuming it is a nonunique case that won't be passed back
+                    pass
+
+                if gramm:
+                    cache[rule] = gramm
+                    return cache[rule]
+                else:
+                    # same case as before pick another grammar index in a rule and try again
+                    pass
+                #startval, endval = m.group("start", "end")
+        return out
 
 
 if __name__ == '__main__':
@@ -128,6 +216,8 @@ if __name__ == '__main__':
         os.path.join(dependencies, grammar)
         for grammar in os.listdir(os.path.join(dependencies))
     ]
+
+    test_grammars = ["pattern:0"]
 
     actions = os.path.join(templates, 'actions.dg')
     controls = os.path.join(templates, 'controls.dg')
