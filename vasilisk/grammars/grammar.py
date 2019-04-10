@@ -57,10 +57,44 @@ class Grammar(BaseGrammar):
                         else:
                             xref_rule = xref
 
-    def generate(self):
-        pass
+    def generate_test(self, action_list, controls_list = None, variable_list=None):
+        """ 
+        loads a list of grammars and checks regex to output code
+        """
+        test_case = ""
+
+        action_rules = self.parse("templates/actions.dg")
+        control_rules = self.parse("templates/controls.dg")
+        variable_rules = self.parse("templates/variables.dg")
+
+        rules = (
+            action_rules,
+            control_rules,
+            variable_rules
+        )
+
+        for action in action_list:
+            rule, index = map(lambda x: int(x) if x.isnumeric() else x, 
+                    action.split(":"))
+            if index > len(action_rules[rule]):
+                raise ValueError(f"grammar index is too high for {rule}")
+            
+            test_case += f"{self.generate(action_rules[rule][index], rules, 'action')}; "
+            break
 
 
+    def generate(self, rule, rules, grammar):
+        action, control, variable = rules
+        if grammar == "action":
+            print(action["regex"])
+            print(rule);
+        elif grammar == "control":
+            pass
+        elif grammar == "variable":
+            pass
+        else:
+            raise ValueError("Unknown grammar in generate function")
+        
 if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.realpath(__file__))
     templates = os.path.join(current_dir, 'templates')
@@ -70,5 +104,8 @@ if __name__ == '__main__':
         os.path.join(dependencies, grammar)
         for grammar in os.listdir(os.path.join(dependencies))
     ]
+
+    test_grammars = ["regex:1", "regex:0", "regex:2", "regex:3", "regex:4"]
     grammar = Grammar(grammar_deps)
     grammar.parse_xrefs()
+    grammar.generate_test(test_grammars)
