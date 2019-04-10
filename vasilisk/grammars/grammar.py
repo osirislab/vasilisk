@@ -17,7 +17,10 @@ class Grammar(BaseGrammar):
         self.corpus = {}
 
         for grammar in grammars:
-            self.corpus[os.path.basename(grammar)] = self.parse(grammar)
+            grammar_name = os.path.basename(grammar).replace('.dg', '')
+            self.corpus[grammar_name] = self.parse(grammar)
+
+
 
     def parse(self, grammar):
         with open(grammar, 'r') as f:
@@ -42,20 +45,26 @@ class Grammar(BaseGrammar):
     def xref(self, token):
         out = []
         for m in re.finditer(self.xref_re, token, re.VERBOSE | re.DOTALL):
-            if m.group('type'):
-                out.append(m.group('xref'))
+            if m.group('type') and m.group('type') != '!':
+                out.append((m.start('xref'), m.end('xref')))
         return out
 
     def parse_xrefs(self):
-        for name, grammar in self.corpus.items():
-            for rule, subrules in grammar.items():
-                for subrule in subrules:
-                    xrefs = self.xref(subrule)
-                    for xref in xrefs:
-                        if ':' in xref:
-                            xref_grammar, xref_rule = xref.split(':')
-                        else:
-                            xref_rule = xref
+        for rule, subrules in self.corpus['actions'].items():
+            for subrule in subrules:
+                xrefs = self.xref(subrule)
+                for xref in xrefs:
+                    xref_l = subrule[:xref[0]-1]
+                    xref_r = subrule[xref[1]+1:]
+                    xref = subrule[xref[0]:xref[1]]
+                    replacements = []
+                    if ':' in xref:
+                        xref_grammar, xref_rule = xref.split(':')
+                        xref_subrules = self.corpus[xref_grammar][xref_rule]
+                        for xref_subrule in xref_subrules:
+                            replacements.append(xref_l + xref_subrule + xref_r)
+
+                    print(replacements)
 
     def generate(self):
         pass
@@ -70,5 +79,10 @@ if __name__ == '__main__':
         os.path.join(dependencies, grammar)
         for grammar in os.listdir(os.path.join(dependencies))
     ]
-    grammar = Grammar(grammar_deps)
+
+    actions = os.path.join(templates, 'actions.dg')
+    controls = os.path.join(templates, 'controls.dg')
+    variables = os.path.join(templates, 'variables.dg')
+
+    grammar = Grammar(grammar_deps + [actions, controls, variables])
     grammar.parse_xrefs()
