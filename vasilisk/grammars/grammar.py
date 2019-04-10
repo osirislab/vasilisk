@@ -20,8 +20,6 @@ class Grammar(BaseGrammar):
             grammar_name = os.path.basename(grammar).replace('.dg', '')
             self.corpus[grammar_name] = self.parse(grammar)
 
-
-
     def parse(self, grammar):
         with open(grammar, 'r') as f:
             grammar_text = f.read()
@@ -86,3 +84,5 @@ if __name__ == '__main__':
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
     grammar.parse_xrefs()
+
+    print(grammar.corpus['regexp'])
