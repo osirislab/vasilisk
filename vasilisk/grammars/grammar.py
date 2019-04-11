@@ -2,6 +2,7 @@ import itertools
 import os
 import random
 import re
+import time
 
 from base import BaseGrammar
 
@@ -20,16 +21,27 @@ class Grammar(BaseGrammar):
         self.repeat_max = repeat
         self.max_recursions = 100000
 
-        self.actions = []
-        self.controls = []
-        self.variables = []
-
-        self.wrapper = ('function f()\{{}\} %%DebugPrint(f());'
-                        '%%OptimizeFunctionOnNextCall(f);%%DebugPrint(f());"')
-
         for grammar in grammars:
             grammar_name = os.path.basename(grammar).replace('.dg', '')
             self.corpus[grammar_name] = self.parse(grammar)
+
+        self.action_depth = 5
+        self.action_size = 5
+
+        self.actions = {}
+        self.controls = {}
+        self.variables = {}
+
+        self.actions_pool = []
+        self.controls_pool = []
+        self.variables_pool = []
+
+        self.load_pools()
+
+        self.curr_actions = self.get_actions()
+
+        self.wrapper = ('function f(){{ {} }} %%DebugPrint(f());'
+                        '%%OptimizeFunctionOnNextCall(f);%%DebugPrint(f());"')
 
     def parse(self, grammar):
         with open(grammar, 'r') as f:
@@ -142,7 +154,7 @@ class Grammar(BaseGrammar):
             if index > len(self.corpus[name][rule]):
                 raise ValueError(f"grammar index is too high for {rule}")
 
-            test_case += f"{self.generate(self.corpus[name][rule][index], 'regexp')};"
+            test_case += f"{self.parse_funcs(self.corpus[name][rule][index], 'regexp')};"
             print(test_case)
             break
 
@@ -217,14 +229,21 @@ class Grammar(BaseGrammar):
                 # startval, endval = m.group("start", "end")
         return out
 
+    def load_pools(self):
+        for rule, subrules in self.corpus['actions'].items():
+            for i, subrule in enumerate(subrules):
+                self.actions[f'{rule}:{i}'] = subrule
+
     def load(self):
         while True:
-            self.actions = random.sample(self.corpus['actions'], 5)
+            self.actions_pool = random.sample(self.actions.keys(),
+                                              self.action_size)
 
-            if self.coverage.unique(self.actions_pool, self.controls_pool):
-                break
+            # if self.coverage.unique(self.actions_pool, self.controls_pool):
+            break
 
     def get_actions(self):
+        self.load()
         actions = [0]
 
         while len(actions) <= self.action_depth:
@@ -241,7 +260,24 @@ class Grammar(BaseGrammar):
         yield None
 
     def generate(self):
-        pass
+        actions = next(self.curr_actions)
+        if actions is None:
+            # while self.coverage.get_count() < self.curr_combs:
+            #     time.sleep(0.5)
+
+            # self.coverage.score(self.actions_pool, self.controls_pool,
+            #                     self.action_depth, self.control_depth)
+            # self.coverage.reset(self.actions_pool, self.controls_pool)
+            # self.curr_combs = 0
+
+            # if self.coverage.get_saved() > self.saved_req:
+
+            self.curr_actions = self.get_actions()
+            actions = next(self.curr_actions)
+
+        actions = [self.actions[self.actions_pool[i]] for i in actions]
+
+        return self.wrapper.format(';'.join(actions))
 
 
 if __name__ == '__main__':
@@ -261,4 +297,5 @@ if __name__ == '__main__':
     variables = os.path.join(templates, 'variables.dg')
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
-    grammar.unravel()
+    # grammar.unravel()
+    print(grammar.generate())
