@@ -338,10 +338,10 @@ if __name__ == '__main__':
 
     test_grammars = ["pattern:0"]
 
-    actions = os.path.join(templates, 'actions.dg')
+    actions = os.path.join(templates, '/tmp/test.dg')
     controls = os.path.join(templates, 'controls.dg')
     variables = os.path.join(templates, 'variables.dg')
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
-    # grammar.unravel()
+    grammar.unravel()
     print(grammar.generate())
