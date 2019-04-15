@@ -4,6 +4,8 @@ import random
 import re
 import time
 
+# from coverage.iterative import handler
+
 from base import BaseGrammar
 
 
@@ -27,6 +29,10 @@ class Grammar(BaseGrammar):
 
         self.action_depth = 5
         self.action_size = 5
+        self.control_depth = 1
+        self.control_size = 1
+        self.variable_depth = 1
+        self.variable_size = 1
 
         self.actions = {}
         self.controls = {}
@@ -37,8 +43,9 @@ class Grammar(BaseGrammar):
         self.variables_pool = []
 
         self.load_pools()
+        self.load()
 
-        self.curr_actions = self.get_actions()
+        # self.coverage = handler.CoverageHandler()
 
         self.wrapper = ('function f(){{ {} }} %%DebugPrint(f());'
                         '%%OptimizeFunctionOnNextCall(f);%%DebugPrint(f());"')
@@ -233,51 +240,90 @@ class Grammar(BaseGrammar):
         for rule, subrules in self.corpus['actions'].items():
             for i, subrule in enumerate(subrules):
                 self.actions[f'{rule}:{i}'] = subrule
+        for rule, subrules in self.corpus['controls'].items():
+            for i, subrule in enumerate(subrules):
+                self.controls[f'{rule}:{i}'] = subrule
+        for rule, subrules in self.corpus['variables'].items():
+            for i, subrule in enumerate(subrules):
+                self.variables[f'{rule}:{i}'] = subrule
 
     def load(self):
         while True:
             self.actions_pool = random.sample(self.actions.keys(),
                                               self.action_size)
-
+            self.controls_pool = random.sample(self.controls.keys(),
+                                               self.control_size)
+            self.variables_pool = random.sample(self.variables.keys(),
+                                                self.variable_size)
             # if self.coverage.unique(self.actions_pool, self.controls_pool):
+            #     break
             break
 
-    def get_actions(self):
-        self.load()
-        actions = [0]
+        self.curr_actions = self.iterate_rules(self.action_depth,
+                                               self.action_size)
+        self.curr_controls = self.iterate_rules(self.control_depth,
+                                                self.control_size)
+        self.curr_variables = self.iterate_rules(self.variable_depth,
+                                                 self.variable_size)
 
-        while len(actions) <= self.action_depth:
-            yield actions
-            actions[0] += 1
-            for i in range(len(actions) - 1):
-                if actions[i] >= self.action_size:
-                    actions[i] = 0
-                    actions[i + 1] += 1
+        self.curr_action = next(self.curr_actions)
+        self.curr_control = next(self.curr_controls)
+        self.curr_variable = next(self.curr_variables)
 
-            if actions[-1] >= self.action_size:
-                actions = [0 for _ in range(len(actions) + 1)]
+    def iterate_rules(self, depth, size):
+        rules = [0]
+
+        while len(rules) <= depth:
+            yield rules
+            rules[0] += 1
+            for i in range(len(rules) - 1):
+                if rules[i] >= size:
+                    rules[i] = 0
+                    rules[i + 1] += 1
+
+            if rules[-1] >= size:
+                rules = [0 for _ in range(len(rules) + 1)]
 
         yield None
 
     def generate(self):
-        actions = next(self.curr_actions)
-        if actions is None:
-            # while self.coverage.get_count() < self.curr_combs:
-            #     time.sleep(0.5)
+        if self.curr_action is None:
+            self.curr_actions = self.iterate_rules(self.action_depth,
+                                                   self.action_size)
+            self.curr_action = next(self.curr_actions)
+            self.curr_control = next(self.curr_controls)
+            if self.curr_control is None:
+                self.curr_controls = self.iterate_rules(self.control_depth,
+                                                        self.control_size)
+                self.curr_control = next(self.curr_controls)
+                self.curr_variable = next(self.curr_variables)
+                if self.curr_variable is None:
+                    # while self.coverage.get_count() < self.curr_combs:
+                    #     time.sleep(0.5)
+                    #
+                    # self.coverage.score(self.actions_pool, self.controls_pool,
+                    #                     self.action_depth, self.control_depth)
+                    # self.coverage.reset(self.actions_pool, self.controls_pool)
+                    self.curr_combs = 0
+                    self.load()
 
-            # self.coverage.score(self.actions_pool, self.controls_pool,
-            #                     self.action_depth, self.control_depth)
-            # self.coverage.reset(self.actions_pool, self.controls_pool)
-            # self.curr_combs = 0
+        actions = [self.actions[self.actions_pool[i]]
+                   for i in self.curr_action]
+        controls = [self.controls[self.controls_pool[i]]
+                    for i in self.curr_control]
+        variables = [self.variables[self.variables_pool[i]]
+                     for i in self.curr_variable]
 
-            # if self.coverage.get_saved() > self.saved_req:
+        lines = []
+        for i, variable in enumerate(variables):
+            lines.append(f'var var{i} = {variable}')
+        lines += actions
+        for control in controls:
+            lines.append(control)
 
-            self.curr_actions = self.get_actions()
-            actions = next(self.curr_actions)
+        self.curr_action = next(self.curr_actions)
 
-        actions = [self.actions[self.actions_pool[i]] for i in actions]
-
-        return self.wrapper.format(';'.join(actions))
+        return self.wrapper.format(';'.join(lines) + ';')
 
 
 if __name__ == '__main__':
