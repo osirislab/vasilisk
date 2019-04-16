@@ -38,6 +38,8 @@ class Grammar(BaseGrammar):
         self.controls = {}
         self.variables = {}
 
+        self.grammar_cache = {}
+
         self.actions_pool = []
         self.controls_pool = []
         self.variables_pool = []
@@ -78,6 +80,7 @@ class Grammar(BaseGrammar):
         return out
 
     def parse_xref(self, grammar, xref, common=False):
+        #print(grammar, xref)
         if ':' in xref:
             xref_grammar, xref_rule = xref.split(':')
             if not common and xref_grammar == 'common':
@@ -86,6 +89,7 @@ class Grammar(BaseGrammar):
             xref_grammar, xref_rule = grammar, xref
 
         xref_subrules = self.corpus[xref_grammar][xref_rule]
+        #print('i found these subrules', xref_subrules)
         new_subrules = []
         for xref in xref_subrules:
             inner_xrefs = self.xref(xref)
@@ -94,7 +98,7 @@ class Grammar(BaseGrammar):
 
             for inner_xref in inner_xrefs:
                 inner_xref = xref[inner_xref[0]:inner_xref[1]]
-                new_subrules += self.parse_xref(xref_grammar, inner_xref)
+                new_subrules += self.parse_xref(xref_grammar, inner_xref, common)
 
         return new_subrules
 
@@ -161,80 +165,50 @@ class Grammar(BaseGrammar):
             if index > len(self.corpus[name][rule]):
                 raise ValueError(f"grammar index is too high for {rule}")
 
-            test_case += f"{self.parse_funcs(self.corpus[name][rule][index], 'regexp')};"
-            print(test_case)
+            self.grammar_cache[rule] = self.parse_func(name, self.corpus[name][rule][index])
+            print(self.grammar_cache[rule])
             break
 
-    def parse_funcs(self, rule,  grammar, cache=None, recurse_count=0):
-        out, end = [], 0
-        if cache is None:
-            cache = {}
-
-        for k in cache.items():
-            print(k)
-
+    def parse_func(self, grammar, rule, recurse_count=0):
         if recurse_count == self.max_recursions:
             return False
 
-        if rule in cache:
-            return cache[rule]
-
-        token = rule.replace("\\n", "\n")
-        for m in re.finditer(self.xref_re, token, re.VERBOSE | re.DOTALL):
-            if m.start(0) > end:
-                end = m.end(0)
-            elif m.group("repeat") is not None:
+        for m in re.finditer(self.xref_re, rule, re.VERBOSE | re.DOTALL):
+            if m.group("repeat") is not None:
                 repeat, separator, nodups = m.group("repeat", "separator", "nodups")
-                # print(repeat, separator, nodups)
                 if separator is None:
                     separator = ""
                 if nodups is None:
                     nodups = ""
 
-                if ":" in separator:
-                    grammar = separator.split(":")[0]
-
-                for i in range(self.repeat_max):
-                    res = self.generate(repeat, grammar, cache, recurse_count + 1)
-                    if res:
-                        out.append(res)
-                    else:
+                repeat = repeat[1:-1]
+                xrefs = self.parse_xref(grammar, repeat, common=True)
+                out = []
+                repeat_power = random.randint(1, self.repeat_max)
+                for i in range(repeat_power):
+                    out.append(self.parse_func(grammar, random.choice(xrefs), recurse_count + 1))
                         # use Roy's code to use another grammar index instead of the
                         # one specified previously
-                        pass
 
-                cache[rule] = separator.join(out)
-                return cache[rule]
+                return separator.join(out)
 
             elif m.group("choices") is not None:
                 choices = m.group("choices")
-            else:
-                if "+" in rule:
-                    if ":" in rule:
-                        grammar = rule.split(":")[0].strip("+")
-                        gramm = rule.split(":")[1].strip("+")
-                    else:
-                        gramm = rule.strip("+")
-                    print(grammar, gramm, self.corpus[grammar][gramm][7])
+                # None of our grammars should hit this case yet
 
-                    gramm = self.generate(self.corpus[grammar][gramm][7], grammar, cache, recurse_count + 1)
-                else:
-                    gramm = rule
-                    # have to use Roy's code that covers basic cases
-                    # and successfully
-                    # parse and make the grammar assuming it is a non-unique
-                    # case that won't be passed back
-                    pass
+            elif m.group("unique") is not None:
+                unique = m.group("unique").strip("+")
+                xrefs = self.parse_xref(grammar, unique, common=True)
+                return xrefs[0];
 
-                if gramm:
-                    cache[rule] = gramm
-                    return cache[rule]
-                else:
-                    # same case as before pick another grammar index
-                    # in a rule and try again
-                    pass
-                # startval, endval = m.group("start", "end")
-        return out
+            elif m.group("start") is not None and m.group("end") is not None:
+                b_range = m.group("start")
+                e_range = m.group("end")
+                if b_range.isalpha():
+                    return chr(random.randint(ord(b_range), ord(e_range)))
+                return str(random.randint(int(b_range), int(e_range)))
+
+        return rule
 
     def load_pools(self):
         for rule, subrules in self.corpus['actions'].items():
@@ -344,11 +318,16 @@ if __name__ == '__main__':
         for grammar in os.listdir(os.path.join(dependencies))
     ]
 
+    test_grammars = ["flags:0"]
+
     actions = os.path.join(templates, 'actions.dg')
     controls = os.path.join(templates, 'controls.dg')
     variables = os.path.join(templates, 'variables.dg')
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
+    print(grammar.generate_test(test_grammars))
+    # grammar.unravel()
+    # print(grammar.generate())
     grammar.unravel()
     for _ in range(1000):
         print(grammar.generate())
