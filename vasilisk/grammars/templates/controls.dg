@@ -1,2 +1,2 @@
 LanguageConstructs :=
-    return var0
+    #actions#; return var0

@@ -139,12 +139,12 @@ class Grammar(BaseGrammar):
 
             self.corpus['actions'][rule] = cumulative_subrules
 
-        with open('/tmp/test.dg', 'w+') as f:
-            for rule, subrules in self.corpus['actions'].items():
-                f.write(f'{rule} :=\n')
-                for subrule in subrules:
-                    f.write(f'\t{subrule}\n')
-                f.write('\n')
+        # with open('/tmp/actions.dg', 'w+') as f:
+        #     for rule, subrules in self.corpus['actions'].items():
+        #         f.write(f'{rule} :=\n')
+        #         for subrule in subrules:
+        #             f.write(f'\t{subrule}\n')
+        #         f.write('\n')
 
     def generate_test(self, grammar_list, name="regexp", path=None):
         """
@@ -318,12 +318,20 @@ class Grammar(BaseGrammar):
         for i, variable in enumerate(variables):
             lines.append(f'var var{i} = {variable}')
         lines += actions
+
+        controls_fmt = []
         for control in controls:
-            lines.append(control)
+            controls_fmt.append(control.replace('#actions#', '{}'))
+
+        control_wrapper = '{}'
+        for control in controls_fmt:
+            control_wrapper = control_wrapper.format(control)
+
+        control_wrapper = control_wrapper.format(';'.join(lines) + ';')
 
         self.curr_action = next(self.curr_actions)
 
-        return self.wrapper.format(';'.join(lines) + ';')
+        return self.wrapper.format(control_wrapper)
 
 
 if __name__ == '__main__':
@@ -336,12 +344,11 @@ if __name__ == '__main__':
         for grammar in os.listdir(os.path.join(dependencies))
     ]
 
-    test_grammars = ["pattern:0"]
-
-    actions = os.path.join(templates, '/tmp/test.dg')
+    actions = os.path.join(templates, 'actions.dg')
     controls = os.path.join(templates, 'controls.dg')
     variables = os.path.join(templates, 'variables.dg')
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
     grammar.unravel()
-    print(grammar.generate())
+    for _ in range(1000):
+        print(grammar.generate())
