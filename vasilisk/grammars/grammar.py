@@ -174,6 +174,10 @@ class Grammar(BaseGrammar):
                     new_rule = rule_l + expanded + rule_r
                     return self.parse_func('common', new_rule)
 
+            if m.group('type') == '!':
+                part = final.group('type')
+                return final.replace("!" + part + "!", "var0")
+
             if m.group('repeat') is not None:
                 repeat, separator, nodups = m.group('repeat', 'separator',
                                                     'nodups')
@@ -190,8 +194,6 @@ class Grammar(BaseGrammar):
                     out.append(self.parse_func(grammar, random.choice(xrefs),
                                                recurse_count + 1, True))
 
-                result = separator.join(out)
-
                 if not child:
                     rule_l = rule[:m.start('repeat') - 1]
                     rule_l = rule_l.replace('%repeat%', '')
@@ -201,7 +203,7 @@ class Grammar(BaseGrammar):
                     rule_r = rule[end + 1:]
                     result = rule_l + result + rule_r
 
-                return result
+                return self.parse_func(result)
 
             if m.group('unique') is not None:
                 unique = m.group('unique').strip('+')
@@ -218,6 +220,10 @@ class Grammar(BaseGrammar):
                 if b_range.isalpha():
                     return chr(random.randint(ord(b_range), ord(e_range)))
                 return str(random.randint(int(b_range), int(e_range)))
+
+            elif m.group('type') == '!':
+                xref = rule[m.start('xref'):m.end('xref')]
+                return rule.replace("!" + xref + "!", "var0")
 
         return rule
 
@@ -354,5 +360,5 @@ if __name__ == '__main__':
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
 
-    for _ in range(100):
+    for _ in range(40):
         print(grammar.generate())
