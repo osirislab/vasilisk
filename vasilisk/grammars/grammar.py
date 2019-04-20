@@ -13,7 +13,7 @@ class Grammar(BaseGrammar):
     def __init__(self, grammars, repeat=4):
         self.xref_re = r'''(
             (?P<type>\+|!|@)(?P<xref>[a-zA-Z0-9:_]+)(?P=type)|
-            %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*"(?P<separator>.*?)")?\s*(,\s*(?P<nodups>nodups))?\s*\)|
+            %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*'(?P<separator>.*?)')?\s*(,\s*(?P<nodups>nodups))?\s*\)|
             %range%\((?P<start>.+?)-(?P<end>.+?)\)|
             %choice%\(\s*(?P<choices>.+?)\s*\)|
             %unique%\(\s*(?P<unique>.+?)\s*\)
@@ -175,8 +175,11 @@ class Grammar(BaseGrammar):
                     return self.parse_func('common', new_rule)
 
             if m.group('type') == '!':
-                part = final.group('type')
-                return final.replace("!" + part + "!", "var0")
+                part = rule[m.start('xref'):m.end('xref')]
+
+                return self.parse_func(
+                    grammar, rule.replace('!' + part + '!', 'var0')
+                )
 
             if m.group('repeat') is not None:
                 repeat, separator, nodups = m.group('repeat', 'separator',
@@ -193,6 +196,8 @@ class Grammar(BaseGrammar):
                 for i in range(repeat_power):
                     out.append(self.parse_func(grammar, random.choice(xrefs),
                                                recurse_count + 1, True))
+
+                result = separator.join(out)
 
                 if not child:
                     rule_l = rule[:m.start('repeat') - 1]
@@ -223,7 +228,7 @@ class Grammar(BaseGrammar):
 
             elif m.group('type') == '!':
                 xref = rule[m.start('xref'):m.end('xref')]
-                return rule.replace("!" + xref + "!", "var0")
+                return rule.replace('!' + xref + '!', 'var0')
 
         return rule
 
