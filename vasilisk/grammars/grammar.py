@@ -168,12 +168,15 @@ class Grammar(BaseGrammar):
                     out.append(self.parse_func(grammar, random.choice(xrefs),
                                                recurse_count + 1))
 
-                return separator.join(out)
+                final = separator.join(out)
+                if final.group('type') == '!':
+                    part = final.group('type')
+                    return final.replace("!" + part + "!", "var0")
 
             elif m.group('unique') is not None:
                 unique = m.group('unique').strip('+')
                 xrefs = self.parse_xref(grammar, unique, common=True)
-                return xrefs[0]
+                return random.choice(xrefs)
 
             elif m.group('start') is not None and m.group('end') is not None:
                 b_range = m.group('start')
@@ -181,6 +184,10 @@ class Grammar(BaseGrammar):
                 if b_range.isalpha():
                     return chr(random.randint(ord(b_range), ord(e_range)))
                 return str(random.randint(int(b_range), int(e_range)))
+            
+            elif m.group('type') == '!':
+                xref = rule[m.start('xref'):m.end('xref')]
+                return rule.replace("!" + xref + "!", "var0")
 
         return rule
 
@@ -319,5 +326,5 @@ if __name__ == '__main__':
     grammar = Grammar(grammar_deps + [actions, controls, variables])
 
     grammar.unravel()
-    for _ in range(100):
+    for _ in range(40):
         print(grammar.generate())
