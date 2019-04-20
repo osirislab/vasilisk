@@ -13,7 +13,7 @@ class Grammar(BaseGrammar):
     def __init__(self, grammars, repeat=4):
         self.xref_re = r'''(
             (?P<type>\+|!|@)(?P<xref>[a-zA-Z0-9:_]+)(?P=type)|
-            %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*'(?P<separator>.*?)')?\s*(,\s*(?P<nodups>nodups))?\s*\)|
+            %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*"(?P<separator>.*?)")?\s*(,\s*(?P<nodups>nodups))?\s*\)|
             %range%\((?P<start>.+?)-(?P<end>.+?)\)|
             %choice%\(\s*(?P<choices>.+?)\s*\)|
             %unique%\(\s*(?P<unique>.+?)\s*\)
@@ -27,8 +27,10 @@ class Grammar(BaseGrammar):
             grammar_name = os.path.basename(grammar).replace('.dg', '')
             self.corpus[grammar_name] = self.parse(grammar)
 
-        self.action_depth = 5
-        self.action_size = 5
+        self.unravel()
+
+        self.action_depth = 1
+        self.action_size = 1
         self.control_depth = 1
         self.control_size = 1
         self.variable_depth = 1
@@ -79,6 +81,16 @@ class Grammar(BaseGrammar):
                 out.append((m.start('xref'), m.end('xref')))
         return out
 
+    def unresolved_xref(self, grammar, token):
+        match = re.search(r'''\+(?P<xref>[a-zA-Z0-9:_]+)\+''', token)
+        if match:
+            rule_l = token[:match.start('xref')]
+            rule_r = token[match.end('xref'):]
+            new_rule = rule_l + grammar + ':' + match.group('xref') + rule_r
+            return new_rule
+
+        return token
+
     def parse_xref(self, grammar, xref, common=False):
         if ':' in xref:
             xref_grammar, xref_rule = xref.split(':')
@@ -92,6 +104,7 @@ class Grammar(BaseGrammar):
         for xref in xref_subrules:
             inner_xrefs = self.xref(xref)
             if not inner_xrefs:
+                xref = self.unresolved_xref(xref_grammar, xref)
                 new_subrules.append(xref)
 
             for inner_xref in inner_xrefs:
@@ -142,17 +155,26 @@ class Grammar(BaseGrammar):
 
             self.corpus['actions'][rule] = cumulative_subrules
 
-    def parse_func(self, grammar, rule, recurse_count=0):
+    def parse_func(self, grammar, rule, recurse_count=0, child=False):
+        if grammar in ['controls', 'variables']:
+            return
         if recurse_count == self.max_recursions:
             return False
 
         for m in re.finditer(self.xref_re, rule, re.VERBOSE | re.DOTALL):
             if m.group('type') == '+':
                 xref = rule[m.start('xref'):m.end('xref')]
-                expanded = random.choice(self.parse_xref(grammar, xref, True))
+                if 'common' in xref:
+                    expanded = random.choice(
+                        self.parse_xref(grammar, xref, True)
+                    )
 
-                return rule[:m.start('xref') - 1] + expanded + rule[m.end('xref') + 1:]
-            elif m.group('repeat') is not None:
+                    rule_l = rule[:m.start('xref') - 1]
+                    rule_r = rule[m.end('xref') + 1:]
+                    new_rule = rule_l + expanded + rule_r
+                    return self.parse_func('common', new_rule)
+
+            if m.group('repeat') is not None:
                 repeat, separator, nodups = m.group('repeat', 'separator',
                                                     'nodups')
                 if separator is None:
@@ -166,16 +188,31 @@ class Grammar(BaseGrammar):
                 repeat_power = random.randint(1, self.repeat_max)
                 for i in range(repeat_power):
                     out.append(self.parse_func(grammar, random.choice(xrefs),
-                                               recurse_count + 1))
+                                               recurse_count + 1, True))
 
-                return separator.join(out)
+                result = separator.join(out)
 
-            elif m.group('unique') is not None:
+                if not child:
+                    rule_l = rule[:m.start('repeat') - 1]
+                    rule_l = rule_l.replace('%repeat%', '')
+                    end = max(
+                        [m.end('nodups'), m.end('separator'), m.end('repeat')]
+                    )
+                    rule_r = rule[end + 1:]
+                    result = rule_l + result + rule_r
+
+                return result
+
+            if m.group('unique') is not None:
                 unique = m.group('unique').strip('+')
                 xrefs = self.parse_xref(grammar, unique, common=True)
-                return xrefs[0]
+                size = random.randint(1, len(xrefs))
+                possible = list(itertools.product(xrefs, repeat=size))
+                rule_l = rule[:m.start('unique') - 1].replace('%unique%', '')
+                rule_r = rule[m.end('unique') + 1:]
+                return rule_l + ''.join(random.choice(possible)) + rule_r
 
-            elif m.group('start') is not None and m.group('end') is not None:
+            if m.group('start') is not None and m.group('end') is not None:
                 b_range = m.group('start')
                 e_range = m.group('end')
                 if b_range.isalpha():
@@ -283,7 +320,6 @@ class Grammar(BaseGrammar):
         # for i, variable in enumerate(variables):
         #     lines.append(f'var var{i} = {variable}')
         lines += actions
-
         # controls_fmt = []
         # for control in controls:
         #     controls_fmt.append(control.replace('#actions#', '{}'))
@@ -318,6 +354,5 @@ if __name__ == '__main__':
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
 
-    grammar.unravel()
     for _ in range(100):
         print(grammar.generate())

@@ -1,6 +1,4 @@
 regex :=
-    !regexp:regexp!.flags = "+regexp:flags+"
-    !regexp:regexp!.flags
     !regexp:regexp!.global = +common:bool+
     !regexp:regexp!.global
     !regexp:regexp!.ignoreCase = +common:bool+
