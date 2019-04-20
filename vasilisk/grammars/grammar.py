@@ -13,7 +13,7 @@ class Grammar(BaseGrammar):
     def __init__(self, grammars, repeat=4):
         self.xref_re = r'''(
             (?P<type>\+|!|@)(?P<xref>[a-zA-Z0-9:_]+)(?P=type)|
-            %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*'(?P<separator>.*?)')?\s*(,\s*(?P<nodups>nodups))?\s*\)|
+            %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*"(?P<separator>.*?)")?\s*(,\s*(?P<nodups>nodups))?\s*\)|
             %range%\((?P<start>.+?)-(?P<end>.+?)\)|
             %choice%\(\s*(?P<choices>.+?)\s*\)|
             %unique%\(\s*(?P<unique>.+?)\s*\)
@@ -95,7 +95,7 @@ class Grammar(BaseGrammar):
         if ':' in xref:
             xref_grammar, xref_rule = xref.split(':')
             if not common and xref_grammar == 'common':
-                return [xref]
+                return ['+' + xref + '+']
         else:
             xref_grammar, xref_rule = grammar, xref
 
@@ -169,10 +169,11 @@ class Grammar(BaseGrammar):
                         self.parse_xref(grammar, xref, True)
                     )
 
+                    expanded = self.parse_func('common', expanded, 0, True)
                     rule_l = rule[:m.start('xref') - 1]
                     rule_r = rule[m.end('xref') + 1:]
                     new_rule = rule_l + expanded + rule_r
-                    return self.parse_func('common', new_rule)
+                    return new_rule
 
             if m.group('type') == '!':
                 part = rule[m.start('xref'):m.end('xref')]
@@ -202,13 +203,12 @@ class Grammar(BaseGrammar):
                 if not child:
                     rule_l = rule[:m.start('repeat') - 1]
                     rule_l = rule_l.replace('%repeat%', '')
-                    end = max(
-                        [m.end('nodups'), m.end('separator'), m.end('repeat')]
-                    )
+                    print(rule)
+                    end = rule.index(')')
                     rule_r = rule[end + 1:]
                     result = rule_l + result + rule_r
 
-                return self.parse_func(result)
+                return self.parse_func(grammar, result)
 
             if m.group('unique') is not None:
                 unique = m.group('unique').strip('+')
@@ -222,9 +222,19 @@ class Grammar(BaseGrammar):
             if m.group('start') is not None and m.group('end') is not None:
                 b_range = m.group('start')
                 e_range = m.group('end')
+                result = ''
+
                 if b_range.isalpha():
-                    return chr(random.randint(ord(b_range), ord(e_range)))
-                return str(random.randint(int(b_range), int(e_range)))
+                    result = chr(random.randint(ord(b_range), ord(e_range)))
+                else:
+                    result = str(random.randint(int(b_range), int(e_range)))
+
+                if not child:
+                    rule_l = rule[:rule.index('%range%')]
+                    rule_r = rule[rule.index(')') + 1:]
+                    result = rule_l + result + rule_r
+
+                return result
 
             elif m.group('type') == '!':
                 xref = rule[m.start('xref'):m.end('xref')]
