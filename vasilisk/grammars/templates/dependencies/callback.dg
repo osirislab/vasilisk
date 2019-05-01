@@ -5,7 +5,6 @@ simple_callback :=
     function*() { %repeat%(+driver:yield_statement+, ";"); }
     async function() { %repeat%(+driver:statement+, ";"); +driver:return_statement+; }
 
-%%% TODO: make these more interesting
 one_op_predicate :=
     function(thing) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
     async function(thing) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
@@ -44,7 +43,6 @@ foreach_callback :=
     function*(key, value, map) { %repeat%(+driver:yield_statement+, ";"); }
     async function(key, value, map) { %repeat%(+driver:statement+, ";"); }
 
-%%% this callback is really complex, so we're jsut doing something simple for now...
 string_replace_callback :=
     function(match, p1, offset, string) { %repeat%(+driver:statement+, ";"); }
 

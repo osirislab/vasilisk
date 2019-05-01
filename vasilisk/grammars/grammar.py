@@ -1,5 +1,6 @@
 import itertools
 import os
+import logging
 import random
 import re
 import time
@@ -11,6 +12,8 @@ from base import BaseGrammar
 
 class Grammar(BaseGrammar):
     def __init__(self, grammars, repeat=4):
+        self.logger = logging.getLogger(__name__)
+
         self.xref_re = r'''(
             (?P<type>\+|!|@)(?P<xref>[a-zA-Z0-9:_]+)(?P=type)|
             %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*"(?P<separator>.*?)")?\s*(,\s*(?P<nodups>nodups))?\s*\)|
@@ -21,13 +24,26 @@ class Grammar(BaseGrammar):
 
         self.corpus = {}
         self.repeat_max = repeat
-        self.max_recursions = 100000
+        self.repeat_depth = 2
 
         for grammar in grammars:
             grammar_name = os.path.basename(grammar).replace('.dg', '')
             self.corpus[grammar_name] = self.parse(grammar)
 
-        self.unravel()
+        self.unravel('actions')
+        self.unravel('controls')
+        self.unravel('variables')
+
+        logging.info('FINISHED UNRAVELING')
+
+        # logging.debug('final actions:')
+        # logging.debug('\n'.join(self.corpus['actions']['regex']))
+        #
+        # logging.debug('final controls:')
+        # logging.debug('\n'.join(self.corpus['controls']['LanguageConstructs']))
+        #
+        # logging.debug('final variables:')
+        # logging.debug('\n'.join(self.corpus['variables']['regexptype']))
 
         self.action_depth = 1
         self.action_size = 1
@@ -77,175 +93,229 @@ class Grammar(BaseGrammar):
     def xref(self, token):
         out = []
         for m in re.finditer(self.xref_re, token, re.VERBOSE | re.DOTALL):
-            if m.group('type') and m.group('type') != '!':
+            if m.group('type') == '+':
                 out.append((m.start('xref'), m.end('xref')))
         return out
 
     def unresolved_xref(self, grammar, token):
-        match = re.search(r'''\+(?P<xref>[a-zA-Z0-9:_]+)\+''', token)
-        if match:
-            rule_l = token[:match.start('xref')]
-            rule_r = token[match.end('xref'):]
-            new_rule = rule_l + grammar + ':' + match.group('xref') + rule_r
-            return new_rule
+        for match in re.finditer(r'''\+(?P<xref>[a-zA-Z0-9:_]+)\+''', token):
+            if ':' not in match.group('xref'):
+                rule_l = token[:match.start('xref')]
+                rule_r = token[match.end('xref'):]
+                token = rule_l + grammar + ':' + match.group('xref') + rule_r
 
         return token
 
-    def parse_xref(self, grammar, xref, common=False):
-        if ':' in xref:
-            xref_grammar, xref_rule = xref.split(':')
-            if not common and xref_grammar == 'common':
-                return ['+' + xref + '+']
-        else:
-            xref_grammar, xref_rule = grammar, xref
+    def parse_xrefs(self, grammar, subrule, common=False, history=None):
+        self.logger.debug('process grammar: %s | %s', grammar, subrule)
 
-        xref_subrules = self.corpus[xref_grammar][xref_rule]
-        new_subrules = []
-        for xref in xref_subrules:
-            inner_xrefs = self.xref(xref)
-            if not inner_xrefs:
-                xref = self.unresolved_xref(xref_grammar, xref)
-                new_subrules.append(xref)
+        if history is None:
+            history = []
 
-            for inner_xref in inner_xrefs:
-                inner_xref = xref[inner_xref[0]:inner_xref[1]]
-                new_subrules += self.parse_xref(xref_grammar, inner_xref,
-                                                common)
-
-        return new_subrules
-
-    def parse_xrefs(self, grammar, subrule):
         xrefs = self.xref(subrule)
         new_subrules = []
 
+        self.logger.debug('history: %s', str(history))
+
+        if subrule in history:
+            self.logger.debug('found in history: %s', str(subrule))
+            return []
+
         if not xrefs:
-            return [subrule]
+            return [self.unresolved_xref(grammar, subrule)]
 
         expanded_rules = []
         rule_parts = []
         prev_end = 0
-        for xref in xrefs:
-            rule_parts.append(subrule[prev_end:xref[0] - 1])
-            rule_parts.append('{}')
+        for xref_indices in xrefs:
+            rule_parts.append(subrule[prev_end:xref_indices[0] - 1])
+            rule_parts.append(0)
 
-            xref_str = subrule[xref[0]:xref[1]]
-            expanded_rules.append(self.parse_xref(grammar, xref_str))
+            xref = subrule[xref_indices[0]:xref_indices[1]]
 
-            prev_end = xref[1] + 1
+            if ':' in xref:
+                xref_grammar, xref_rule = xref.split(':')
+            else:
+                xref_grammar, xref_rule = grammar, xref
 
-        rule_parts.append(subrule[xref[1] + 1:])
+            xref_subrules = self.corpus[xref_grammar][xref_rule]
+            self.logger.debug('xref_subrules: %s | %s',
+                              xref_rule, xref_subrules)
 
+            if not common and xref_grammar == 'common':
+                parsed_subrules = ['+' + xref + '+']
+            else:
+                parsed_subrules = []
+                for xref_subrule in xref_subrules:
+                    parsed_subrules += self.parse_xrefs(
+                        xref_grammar, xref_subrule, common, history + [subrule]
+                    )
+
+            self.logger.debug('parsed_subrules: %s', parsed_subrules)
+
+            expanded_rules.append(parsed_subrules)
+
+            prev_end = xref_indices[1] + 1
+
+        rule_parts.append(subrule[xref_indices[1] + 1:])
+        rule_fmt = ''
+        for part in rule_parts:
+            if part == 0:
+                rule_fmt += '{}'
+            else:
+                if '{' in part:
+                    part = part.replace('{', '{{')
+
+                if '}' in part:
+                    part = part.replace('}', '}}')
+
+                rule_fmt += part
+
+        self.logger.debug('expanded_rules: %s', expanded_rules)
         products = itertools.product(*expanded_rules)
 
         for product in products:
-            new_subrules.append(''.join(rule_parts).format(*product))
+            new_rule = rule_fmt.format(*product)
+            new_rule = self.unresolved_xref(grammar, new_rule)
+            new_subrules.append(new_rule)
 
+        self.logger.debug('result: %s | %s', grammar, new_subrules)
         return new_subrules
 
-    def unravel(self):
-        for rule, subrules in self.corpus['actions'].items():
+    def unravel(self, grammar):
+        for rule, subrules in self.corpus[grammar].items():
             cumulative_subrules = []
             for subrule in subrules:
-                new_subrules = self.parse_xrefs('actions', subrule)
+                new_subrules = self.parse_xrefs(grammar, subrule)
+                # print(new_subrules)
 
                 if new_subrules:
                     cumulative_subrules += new_subrules
                 else:
                     cumulative_subrules.append(subrule)
 
-            self.corpus['actions'][rule] = cumulative_subrules
+            self.corpus[grammar][rule] = cumulative_subrules
 
-    def parse_func(self, grammar, rule, recurse_count=0, child=False):
-        if grammar in ['controls', 'variables']:
-            return
-        if recurse_count == self.max_recursions:
-            return False
+    def parse_func(self, grammar, rule, history=None):
+        if history is None:
+            history = {}
+        # print('checking for funcs', grammar, rule)
 
-        for m in re.finditer(self.xref_re, rule, re.VERBOSE | re.DOTALL):
-            if m.group('type') == '+':
-                xref = rule[m.start('xref'):m.end('xref')]
-                if 'common' in xref:
-                    expanded = random.choice(
-                        self.parse_xref(grammar, xref, True)
-                    )
+        m = re.search(self.xref_re, rule, re.VERBOSE | re.DOTALL)
 
-                    expanded = self.parse_func('common', expanded, 0, True)
-                    rule_l = rule[:m.start('xref') - 1]
-                    rule_r = rule[m.end('xref') + 1:]
-                    new_rule = rule_l + expanded + rule_r
-                    return new_rule
+        if not m:
+            return rule
 
-            if m.group('type') == '!':
-                part = rule[m.start('xref'):m.end('xref')]
+        if m.group('type') == '!':
+            part = rule[m.start('xref'):m.end('xref')]
 
-                return self.parse_func(
-                    grammar, rule.replace('!' + part + '!', 'var0')
+            logging.info('got variable')
+            return self.parse_func(
+                grammar, rule.replace('!' + part + '!', 'var0'), history
+            )
+
+        if m.group('repeat') is not None:
+            repeat, separator, nodups = m.group('repeat', 'separator',
+                                                'nodups')
+            # print('repeat', repeat)
+
+            if separator is None:
+                separator = ''
+            if nodups is None:
+                nodups = ''
+
+            xrefs = self.parse_xrefs(grammar, repeat, True)
+            out = []
+            repeat_power = random.randint(1, self.repeat_max)
+            if repeat not in history:
+                history[repeat] = 0
+            history[repeat] += 1
+
+            no_repeats = []
+            for no_repeat, count in history.items():
+                if count >= self.repeat_depth:
+                    no_repeats.append(no_repeat)
+
+            # print('repeat history:', history)
+            for i in range(repeat_power):
+                xref = random.choice(xrefs)
+
+                invalid = True
+                while invalid:
+                    invalid = False
+                    for no_repeat in no_repeats:
+                        if no_repeat in xref:
+                            invalid = True
+                            xref = random.choice(xrefs)
+                            break
+
+                # print('picked:', xref)
+
+                out.append(xref)
+
+            result = separator.join(out)
+
+            rule_l = rule[:m.start('repeat') - 1 - len('%repeat%')]
+            rule_r = rule[m.start('repeat'):]
+            rule_r = rule_r[rule_r.index(')') + 1:]
+            result = rule_l + result + rule_r
+
+            logging.info('parse repeat: %s', result)
+
+            return self.parse_func(grammar, result, history)
+
+        if m.group('unique') is not None:
+            unique = m.group('unique')
+            xrefs = self.parse_xrefs(grammar, unique, True)
+            size = random.randint(1, len(xrefs))
+            possible = list(itertools.product(xrefs, repeat=size))
+            rule_l = rule[:m.start('unique') - 1].replace('%unique%', '')
+            rule_r = rule[m.end('unique') + 1:]
+            result = rule_l + ''.join(random.choice(possible)) + rule_r
+
+            logging.info('parse unique: %s', result)
+
+            return self.parse_func(grammar, result, history)
+
+        if m.group('start') is not None and m.group('end') is not None:
+            b_range = m.group('start')
+            e_range = m.group('end')
+            result = ''
+
+            if b_range.isalpha():
+                result = chr(random.randint(ord(b_range), ord(e_range)))
+            else:
+                result = str(random.randint(int(b_range), int(e_range)))
+
+            rule_l = rule[:rule.index('%range%')]
+            rule_r = rule[rule.index('%range%'):]
+            rule_r = rule_r[rule_r.index(')') + 1:]
+            result = rule_l + result + rule_r
+
+            logging.info('parse range: %s', result)
+
+            return self.parse_func(grammar, result, history)
+
+        if m.group('type') == '+':
+            xref = rule[m.start('xref') - 1:m.end('xref') + 1]
+            if 'common' in xref:
+                expanded = random.choice(
+                    self.parse_xrefs(grammar, xref, True)
                 )
 
-            if m.group('repeat') is not None:
-                repeat, separator, nodups = m.group('repeat', 'separator',
-                                                    'nodups')
-                if separator is None:
-                    separator = ''
-                if nodups is None:
-                    nodups = ''
+                rule_l = rule[:m.start('xref') - 1]
+                rule_r = rule[m.end('xref') + 1:]
+                result = rule_l + expanded + rule_r
 
-                repeat = repeat[1:-1]
-                xrefs = self.parse_xref(grammar, repeat, common=True)
-                out = []
-                repeat_power = random.randint(1, self.repeat_max)
-                for i in range(repeat_power):
-                    out.append(self.parse_func(grammar, random.choice(xrefs),
-                                               recurse_count + 1, True))
+                logging.info('parse common: %s', result)
 
-                result = separator.join(out)
-
-                if not child:
-                    rule_l = rule[:m.start('repeat') - 1]
-                    rule_l = rule_l.replace('%repeat%', '')
-                    print(rule)
-                    end = rule.index(')')
-                    rule_r = rule[end + 1:]
-                    result = rule_l + result + rule_r
-
-                return self.parse_func(grammar, result)
-
-            if m.group('unique') is not None:
-                unique = m.group('unique').strip('+')
-                xrefs = self.parse_xref(grammar, unique, common=True)
-                size = random.randint(1, len(xrefs))
-                possible = list(itertools.product(xrefs, repeat=size))
-                rule_l = rule[:m.start('unique') - 1].replace('%unique%', '')
-                rule_r = rule[m.end('unique') + 1:]
-                return rule_l + ''.join(random.choice(possible)) + rule_r
-
-            if m.group('start') is not None and m.group('end') is not None:
-                b_range = m.group('start')
-                e_range = m.group('end')
-                result = ''
-
-                if b_range.isalpha():
-                    result = chr(random.randint(ord(b_range), ord(e_range)))
-                else:
-                    result = str(random.randint(int(b_range), int(e_range)))
-
-                if not child:
-                    rule_l = rule[:rule.index('%range%')]
-                    rule_r = rule[rule.index(')') + 1:]
-                    result = rule_l + result + rule_r
-
-                return result
-
-            elif m.group('type') == '!':
-                xref = rule[m.start('xref'):m.end('xref')]
-                return rule.replace('!' + xref + '!', 'var0')
-
-        return rule
+                return self.parse_func(grammar, result, history)
 
     def load_cache(self, grammar, rules):
         '''
         loads a list of grammars and checks regex to output code
         '''
+        logging.debug('loading %s:%s into cache', grammar, rules)
         self.grammar_cache[grammar] = {}
 
         for rule in rules:
@@ -338,28 +408,29 @@ class Grammar(BaseGrammar):
                      for i in self.curr_variable]
 
         lines = []
-        # for i, variable in enumerate(variables):
-        #     lines.append(f'var var{i} = {variable}')
+        for i, variable in enumerate(variables):
+            lines.append(f'var var{i} = {variable}')
         lines += actions
-        # controls_fmt = []
-        # for control in controls:
-        #     controls_fmt.append(control.replace('#actions#', '{}'))
-        #
-        # control_wrapper = '{}'
-        # for control in controls_fmt:
-        #     control_wrapper = control_wrapper.format(control)
-        #
-        # control_wrapper = control_wrapper.format(';'.join(lines) + ';')
-        #
+        controls_fmt = []
+        for control in controls:
+            controls_fmt.append(control.replace('#actions#', '{}'))
+
+        control_wrapper = '{}'
+        for control in controls_fmt:
+            control_wrapper = control_wrapper.format(control)
+
+        control_wrapper = control_wrapper.format(';'.join(lines) + ';')
+
         self.curr_action = next(self.curr_actions)
 
         control_wrapper = ';'.join(lines)
 
-        # return self.wrapper.format(control_wrapper)
-        return control_wrapper
+        return self.wrapper.format(control_wrapper)
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.ERROR)
+
     current_dir = os.path.dirname(os.path.realpath(__file__))
     templates = os.path.join(current_dir, 'templates')
 

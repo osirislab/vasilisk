@@ -1,8 +1,5 @@
 %section% := value
 
-%%% We could probably generate this from:
-%%% http://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
-%%% But for now im just using some hardcoded examples :/
 locale_str :=
     "en"
     "en-US"

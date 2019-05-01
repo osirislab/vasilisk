@@ -1,67 +1,67 @@
 %section% := value
 
-getPrototypeOfBody := 
+getPrototypeOfBody :=
     throw 1;
     return target.prototype;
-    %repeat%(+driver:statement+, ";"); return target.prototype;
+    +driver:statement+; return target.prototype;
 
-setPrototypeOfBody := 
+setPrototypeOfBody :=
     throw 1;
     target.prototype = proto;
     %repeat%(+driver:statement+, ";"); return target.prototype = proto;
 
-isExtensibleBody := 
+isExtensibleBody :=
     throw 1;
     return +common:bool+;
     %repeat%(+driver:statement+, ";"); return +common:bool+;
 
-preventExtensionsBody := 
+preventExtensionsBody :=
     throw 1;
     return +common:bool+;
     %repeat%(+driver:statement+, ";"); return +common:bool+;
 
-getOwnPropertyDescriptorBody := 
+getOwnPropertyDescriptorBody :=
     throw 1;
     return { configurable: +common:bool+, enumerable: +common:bool+, value: +value:valtype+ }
     %repeat%(+driver:statement+, ";"); return { configurable: +common:bool+, enumerable: +common:bool+, value: +value:valtype+ }
 
-definePropertyBody := 
+definePropertyBody :=
     throw 1;
     return +common:bool+
     %repeat%(+driver:statement+, ";"); return +common:bool+;
 
-hasBody := 
+hasBody :=
     throw 1;
     return +common:bool+
     %repeat%(+driver:statement+, ";"); return +common:bool+;
 
-getBody := 
+getBody :=
     throw 1;
     return target[key];
     %repeat%(+driver:statement+, ";"); return target[key];
     if (key == +reflect:property+) { return +value:valtype+; } else { return target[key]; }
 
-setBody := 
+setBody :=
     throw 1;
     target[key] = value;
     %repeat%(+driver:statement+, ";"); target[key] = value;
 
-deletePropertyBody := 
+deletePropertyBody :=
     throw 1;
     delete target[prop];
     %repeat%(+driver:statement+, ";"); delete target[prop];
 
-ownKeysBody := 
+ownKeysBody :=
     throw 1;
     return +array:arrtype+
     %repeat%(+driver:statement+, ";"); return +array:arrtype+;
 
-applyBody := 
+applyBody :=
     throw 1;
     return +value:valtype+
     %repeat%(+driver:statement+, ";"); return +value:valtype+;
 
-constructBody := 
+constructBody :=
     throw 1;
     return +value:valtype+
     %repeat%(+driver:statement+, ";"); return +value:valtype+;
@@ -69,22 +69,9 @@ constructBody :=
 
 proxytrap :=
     "getPrototypeOf": (target) => { +getPrototypeOfBody+ }
-    "setPrototypeOf": (target, proto) => { +setPrototypeOfBody+ }
-    "isExtensible": (target) => { +isExtensibleBody+ }
-    "preventExtensions": (target) => { +preventExtensionsBody+ }
-    "getOwnPropertyDescriptor": (target, prop) => { +getOwnPropertyDescriptorBody+ }
-    "defineProperty": (target, key, descriptor) => { +definePropertyBody+ }
-    "has": (target, key) => { +hasBody+ }
-    "get": (target, key) => { +getBody+ }
-    "set": (target, key, value) => { +setBody+ }
-    "deleteProperty": (target, prop) => { +deletePropertyBody+ }
-    "ownKeys": (target) => { +ownKeysBody+ }
-    "apply": (target, thisArg, argumentsList) => { +applyBody+ }
-    "construct": (target, args) => { +constructBody+ }
 
 proxyhandler :=
     {%repeat%(+proxytrap+, ", ")}
 
 proxytype :=
     new Proxy(!object:obj!, +proxyhandler+)
-

@@ -18,26 +18,10 @@ valtype :=
     +object:objtype+
     +symbol:symboltype+
     +callback:any_callback+
-    +date:datetype+
-    +regexp:regexptype+
-    +map:maptype+
-    +set:settype+
-    +buffer:arraybuffertype+
-    +buffer:typedarraytype+
-    +boolean:booltype+
-    +symbol:symboltype+
-    +string:stringtype+
-    +number:numbertype+
-    +weakmap:weakmaptype+
-    +weakset:weaksettype+
-    +dataview:dataviewtype+
-    +arguments:argtype+
-    new Proxy(+valtype+, +proxy:proxyhandler+)
-
 
 %section% := variable
 
-val := 
+val :=
     var @val@; try { @val@ = +common:int+; } catch (e) {}
     var @val@; try { @val@ = @object:obj@; } catch (e) {}
     var @val@; try { @val@ = @array:arr@; } catch (e) {}
