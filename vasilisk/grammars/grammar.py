@@ -7,7 +7,26 @@ import time
 # from coverage.iterative import handler
 
 from base import BaseGrammar
+from collections import defaultdict
 
+class group:
+    def __init__(self, size):
+        self.size = size
+        self.actions = []
+        self.interactions = random.choice(["+", "-", "*", "/"])
+        # group = {actions: [{'action': regex:0, 'var': True}, {'action': regex:1, 'var': False'}],
+        #          interactions: ['+']}
+ 
+    
+    def display(self):
+        print("actions: ")
+        for action in self.actions:
+            for k,v in action.items():
+                print(f"\t{k}={v}", end = ",")
+            print()
+
+        print("---------------------")
+        print(f"-> interaction: {self.interactions}")
 
 class Grammar(BaseGrammar):
     def __init__(self, grammars, repeat=4):
@@ -22,6 +41,7 @@ class Grammar(BaseGrammar):
         self.corpus = {}
         self.repeat_max = repeat
         self.max_recursions = 100000
+        self.max_group_size = 10
 
         for grammar in grammars:
             grammar_name = os.path.basename(grammar).replace('.dg', '')
@@ -358,6 +378,41 @@ class Grammar(BaseGrammar):
         # return self.wrapper.format(control_wrapper)
         return control_wrapper
 
+    def generate_group(self):
+        # group = {actions: [{'action': regex:0, 'var': True}, {'action': regex:1, 'var': False'}],
+        #          interactions: ['+']}
+        g = group(random.randint(3, self.max_group_size))
+        for i in range(g.size):
+            g.actions.append({
+                    f"var{i}": ((random.choice([True, False]), random.choice(list(self.variables.keys()))) ),
+                    f"action{i}": random.choice(list(self.actions.keys()))
+                    })
+        return g
+
+    def generate_groups(self, n):
+        for i in range(n):
+            yield self.generate_group()
+
+    def gen_gramm_from_group(self, group):
+        # can test once edge cases are worked 
+        test_case = ""
+        for action in group.actions:
+            var, var_bool = list(action.items())[0]
+            action_var, rule   = list(action.items())[1]
+            disp, var_rule = var_bool
+            var_rule = self.variables[var_rule]
+            var_rule = random.choice(self.parse_xrefs("", var_rule))
+            print(var_rule)
+        
+        #group.display()
+    
+    def gen_group_from_gramm(self, group):
+        pass
+
+    def mutate_group(self, group):
+        pass
+
+
 
 if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -374,6 +429,10 @@ if __name__ == '__main__':
     variables = os.path.join(templates, 'variables.dg')
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
+    grammar.unravel()
+    grammar.load()
+    for i in grammar.generate_groups(1):
+        grammar.gen_gramm_from_group(i)
 
-    for _ in range(40):
-        print(grammar.generate())
+    #for _ in range(100):
+        #print(grammar.generate())
