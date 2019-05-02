@@ -67,8 +67,8 @@ class Grammar(BaseGrammar):
         # logging.debug('final variables:')
         # logging.debug('\n'.join(self.corpus['variables']['regexptype']))
 
-        self.action_depth = 1
-        self.action_size = 1
+        self.action_depth = 5
+        self.action_size = 5
         self.control_depth = 1
         self.control_size = 1
         self.variable_depth = 1
@@ -259,16 +259,22 @@ class Grammar(BaseGrammar):
                     no_repeats.append(no_repeat)
 
             # print('repeat history:', history)
+            search_space = len(xrefs)
             for i in range(repeat_power):
                 xref = random.choice(xrefs)
 
                 invalid = True
+                count = 0
                 while invalid:
+                    if count > search_space:
+                        break
+
                     invalid = False
                     for no_repeat in no_repeats:
                         if no_repeat in xref:
                             invalid = True
                             xref = random.choice(xrefs)
+                            count += 1
                             break
 
                 # print('picked:', xref)
@@ -506,8 +512,11 @@ if __name__ == '__main__':
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
 
-    for i in grammar.generate_groups(1):
-        grammar.gen_gramm_from_group(i)
+    # for i in grammar.generate_groups(1):
+    #     grammar.gen_gramm_from_group(i)
 
-    # for _ in range(40):
-        # print(grammar.generate())
+    start = time.time()
+    count = 100000
+    for _ in range(100000):
+        grammar.generate()
+    print(f'generating {count} took: {time.time() - start} seconds')
