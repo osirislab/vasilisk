@@ -1,2 +1,16 @@
-LanguageConstructs :=
-    #actions#; return var0
+ternary :=
+    pass
+
+cond :=
+    pass
+
+for :=
+    pass
+
+
+while := 
+    pass
+
+switch :=
+    pass
+

@@ -15,7 +15,7 @@ class Group:
     def __init__(self, size):
         self.size = size
         self.actions = []
-        self.interactions = random.choice(['+', '-', '*', '/'])
+        self.interactions = ['+', '-', '*', '/']
         # group = {actions: [{'action': regex:0, 'var': True},
         #                    {'action': regex:1, 'var': False'}],
         #          interactions: ['+']}
@@ -56,7 +56,7 @@ class Grammar(BaseGrammar):
         self.unravel('controls')
         self.unravel('variables')
 
-        logging.info('FINISHED UNRAVELING')
+        #logging.info('FINISHED UNRAVELING')
 
         # logging.debug('final actions:')
         # logging.debug('\n'.join(self.corpus['actions']['regex']))
@@ -221,7 +221,7 @@ class Grammar(BaseGrammar):
     def parse_func(self, grammar, rule, history=None):
         if history is None:
             history = {}
-        print('checking for funcs', grammar, rule)
+        #print('checking for funcs', grammar, rule)
 
         m = re.search(self.xref_re, rule, re.VERBOSE | re.DOTALL)
 
@@ -231,7 +231,7 @@ class Grammar(BaseGrammar):
         if m.group('type') == '!':
             part = rule[m.start('xref'):m.end('xref')]
 
-            logging.info('got variable')
+            #logging.info('got variable')
             return self.parse_func(
                 grammar, rule.replace('!' + part + '!', 'var0'), history
             )
@@ -292,7 +292,7 @@ class Grammar(BaseGrammar):
             rule_r = rule[end + 1:]
             result = rule_l + result + rule_r
 
-            logging.info('parse repeat: %s', result)
+            #logging.info('parse repeat: %s', result)
 
             return self.parse_func(grammar, result, history)
 
@@ -305,7 +305,7 @@ class Grammar(BaseGrammar):
             rule_r = rule[m.end('unique') + 1:]
             result = rule_l + ''.join(random.choice(possible)) + rule_r
 
-            logging.info('parse unique: %s', result)
+            #logging.info('parse unique: %s', result)
 
             return self.parse_func(grammar, result, history)
 
@@ -324,7 +324,7 @@ class Grammar(BaseGrammar):
             rule_r = rule_r[rule_r.index(')') + 1:]
             result = rule_l + result + rule_r
 
-            logging.info('parse range: %s', result)
+            #logging.info('parse range: %s', result)
 
             return self.parse_func(grammar, result, history)
 
@@ -339,7 +339,7 @@ class Grammar(BaseGrammar):
                 rule_r = rule[m.end('xref') + 1:]
                 result = rule_l + expanded + rule_r
 
-                logging.info('parse common: %s', result)
+                #logging.info('parse common: %s', result)
 
                 return self.parse_func(grammar, result, history)
 
@@ -347,7 +347,7 @@ class Grammar(BaseGrammar):
         '''
         loads a list of grammars and checks regex to output code
         '''
-        logging.debug('loading %s:%s into cache', grammar, rules)
+        #logging.debug('loading %s:%s into cache', grammar, rules)
         self.grammar_cache[grammar] = {}
 
         for rule in rules:
@@ -463,34 +463,50 @@ class Grammar(BaseGrammar):
         # group = {actions: [{'action': regex:0, 'var': True},
         #                    {'action': regex:1, 'var': False'}],
         #          interactions: ['+']}
-        g = Group(random.randint(3, self.max_group_size))
+        g = Group(3)#random.randint(3, self.max_group_size))
         for i in range(g.size):
+            var_choice = [True, False]
+            if f"var{i}" == "var0":
+                var_choice = [var_choice[0]]
+            
             g.actions.append(
-                {
-                    f'var{i}': (random.choice([True, False]),
-                                random.choice(list(self.variables.keys()))
-                                ),
-                    f'action{i}': random.choice(list(self.actions.keys()))
-                }
-            )
+                    {
+                        f'var{i}': (random.choice(var_choice),
+                                    random.choice(list(self.variables.keys()))
+                                    ),
+                        f'action{i}': random.choice(list(self.actions.keys()))
+                    }
+                )
         return g
 
     def generate_groups(self, n):
         for i in range(n):
             yield self.generate_group()
-
+    """
     def gen_gramm_from_group(self, group):
         # can test once edge cases are worked
+        cache = defaultdict(list)
+        gramm = "regexp"
+        true_count = 0
         for action in group.actions:
-            var, var_bool = list(action.items())[0]
-            action_var, rule = list(action.items())[1]
-            disp, var_rule = var_bool
-            var_rule = self.variables[var_rule]
-            var_rule = random.choice(self.parse_xrefs('', var_rule))
-            print(var_rule)
-
-        # group.display()
-
+            for k,v in action.items():
+                if "var" in k:
+                    res, rule = v 
+                    if res:
+                        true_count += 1
+                        new_rule = self.parse_func(gramm, self.variables[rule])
+                        cache["vars"].append(new_rule)
+                        action[k] = new_rule
+                    else:
+                        action[k] = random.choice((cache["vars"]))
+                if "action" in k:
+                    if res:
+                        true_count += 1
+                        new_rule = self.parse_func(gramm, self.actions[v])
+                        action[k] = new_rule
+ 
+        group.display()
+    """     
     def gen_group_from_gramm(self, group):
         pass
 
@@ -516,11 +532,11 @@ if __name__ == '__main__':
 
     grammar = Grammar(grammar_deps + [actions, controls, variables])
 
-    # for i in grammar.generate_groups(1):
-    #     grammar.gen_gramm_from_group(i)
+    for i in grammar.generate_groups(1):
+        grammar.gen_gramm_from_group(i)
 
-    start = time.time()
+    """
     count = 10000
     for _ in range(10000):
-        print(grammar.generate())
     print(f'generating {count} took: {time.time() - start} seconds')
+    """
