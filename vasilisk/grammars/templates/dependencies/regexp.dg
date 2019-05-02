@@ -75,7 +75,6 @@ statement :=
     !regexp!.compile()
     "+common:text+".split(!regexp!)
     "+common:text+".split(!regexp!, +common:int+)
-    !regexp!.toSource()
 
 regexptype :=
     new RegExp("+pattern+", "+flags+")

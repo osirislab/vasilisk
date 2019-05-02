@@ -37,7 +37,7 @@ class Grammar(BaseGrammar):
 
         self.xref_re = r'''(
             (?P<type>\+|!|@)(?P<xref>[a-zA-Z0-9:_]+)(?P=type)|
-            %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*'(?P<separator>.*?)')?\s*(,\s*(?P<nodups>nodups))?\s*\)|
+            %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*['"](?P<separator>.*?)['"])?\s*(,\s*(?P<nodups>nodups))?\s*\)|
             %range%\((?P<start>.+?)-(?P<end>.+?)\)|
             %choice%\(\s*(?P<choices>.+?)\s*\)|
             %unique%\(\s*(?P<unique>.+?)\s*\)
@@ -221,7 +221,7 @@ class Grammar(BaseGrammar):
     def parse_func(self, grammar, rule, history=None):
         if history is None:
             history = {}
-        # print('checking for funcs', grammar, rule)
+        print('checking for funcs', grammar, rule)
 
         m = re.search(self.xref_re, rule, re.VERBOSE | re.DOTALL)
 
@@ -241,10 +241,15 @@ class Grammar(BaseGrammar):
                                                 'nodups')
             # print('repeat', repeat)
 
+            if separator is not None:
+                end = m.end('separator') + 1
+            elif nodups is not None:
+                end = m.end('nodups')
+            else:
+                end = m.end('repeat')
+
             if separator is None:
                 separator = ''
-            if nodups is None:
-                nodups = ''
 
             xrefs = self.parse_xrefs(grammar, repeat, True)
             out = []
@@ -284,8 +289,7 @@ class Grammar(BaseGrammar):
             result = separator.join(out)
 
             rule_l = rule[:m.start('repeat') - 1 - len('%repeat%')]
-            rule_r = rule[m.start('repeat'):]
-            rule_r = rule_r[rule_r.index(')') + 1:]
+            rule_r = rule[end + 1:]
             result = rule_l + result + rule_r
 
             logging.info('parse repeat: %s', result)
@@ -296,7 +300,7 @@ class Grammar(BaseGrammar):
             unique = m.group('unique')
             xrefs = self.parse_xrefs(grammar, unique, True)
             size = random.randint(1, len(xrefs))
-            possible = list(itertools.product(xrefs, repeat=size))
+            possible = list(itertools.combinations(xrefs, r=size))
             rule_l = rule[:m.start('unique') - 1].replace('%unique%', '')
             rule_r = rule[m.end('unique') + 1:]
             result = rule_l + ''.join(random.choice(possible)) + rule_r
@@ -451,7 +455,7 @@ class Grammar(BaseGrammar):
 
         self.curr_action = next(self.curr_actions)
 
-        control_wrapper = ';'.join(lines)
+        control_wrapper = ';'.join(lines) + ';'
 
         return self.wrapper.format(control_wrapper)
 
@@ -495,7 +499,7 @@ class Grammar(BaseGrammar):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.INFO)
 
     current_dir = os.path.dirname(os.path.realpath(__file__))
     templates = os.path.join(current_dir, 'templates')
@@ -516,7 +520,7 @@ if __name__ == '__main__':
     #     grammar.gen_gramm_from_group(i)
 
     start = time.time()
-    count = 100000
-    for _ in range(100000):
-        grammar.generate()
+    count = 10000
+    for _ in range(10000):
+        print(grammar.generate())
     print(f'generating {count} took: {time.time() - start} seconds')
