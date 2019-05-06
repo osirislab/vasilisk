@@ -529,12 +529,10 @@ if __name__ == '__main__':
     actions = os.path.join(templates, 'actions.dg')
     controls = os.path.join(templates, 'controls.dg')
     variables = os.path.join(templates, 'variables.dg')
-
+    
     grammar = Grammar(grammar_deps + [actions, controls, variables])
-
-    for i in grammar.generate_groups(1):
-        grammar.gen_gramm_from_group(i)
-
+    #for i in range(10):
+    #    print(grammar.generate())
     """
     count = 10000
     for _ in range(10000):
