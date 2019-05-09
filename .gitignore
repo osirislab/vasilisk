@@ -6,3 +6,5 @@ turbo.cfg
 turbo/
 crashes/
 vasilisk/grammars/templates/old
+args.gn
+paper/
