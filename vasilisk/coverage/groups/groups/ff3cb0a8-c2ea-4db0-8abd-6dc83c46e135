@@ -1,1 +1,0 @@
-{"action_vars": [["regex:9", "var4"], ["regex:9", "var3"], ["regex:9", "var2"], ["regex:9", "var1"], ["regex:8", "var0"]], "vars": {"var0": "regexptype:3", "var1": "regexptype:3", "var2": "regexptype:2", "var3": "regexptype:3", "var4": "regexptype:2"}, "controls": ["#actions#; return result;"], "interactions": ["+", "+", "+", "+"]}
