@@ -92,7 +92,7 @@ class Vasilisk:
 @click.command()
 @click.option('--fuzzer', required=True,
               type=click.Choice(fuzzers.fuzzers.keys()),
-              default='probabilistic',
+              default='groups',
               help='which fuzzer to use. differences in README')
 @click.option('--d8', envvar='D8_PATH',
               help='location of d8 executable. defaults to value stored \

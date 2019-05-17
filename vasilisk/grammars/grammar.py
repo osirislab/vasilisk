@@ -1,3 +1,4 @@
+import copy
 import itertools
 import os
 import logging
@@ -5,38 +6,34 @@ import random
 import re
 import time
 
-# from coverage.iterative import handler
+from collections import Counter
 
-from base import BaseGrammar
-from collections import defaultdict
+from coverage.groups import handler
 
-
-class Group:
-    def __init__(self, size):
-        self.size = size
-        self.actions = []
-        self.interactions = ['+', '-', '*', '/']
-        # group = {actions: [{'action': regex:0, 'var': True},
-        #                    {'action': regex:1, 'var': False'}],
-        #          interactions: ['+']}
-
-    def display(self):
-        print('actions: ')
-        for action in self.actions:
-            for k, v in action.items():
-                print(f'\t{k}={v}', end=',')
-            print()
-
-        print('---------------------')
-        print(f'-> interaction: {self.interactions}')
+from .base import BaseGrammar
 
 
 class Grammar(BaseGrammar):
-    def __init__(self, grammars, repeat=4):
+    def __init__(self, repeat=4):
         self.logger = logging.getLogger(__name__)
 
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        templates = os.path.join(current_dir, 'templates')
+
+        dependencies = os.path.join(templates, 'dependencies')
+        grammar_deps = [
+            os.path.join(dependencies, grammar)
+            for grammar in os.listdir(os.path.join(dependencies))
+        ]
+
+        actions = os.path.join(templates, 'actions.dg')
+        controls = os.path.join(templates, 'controls.dg')
+        variables = os.path.join(templates, 'variables.dg')
+
+        grammars = grammar_deps + [actions, controls, variables]
+
         self.xref_re = r'''(
-            (?P<type>\+|!|@)(?P<xref>[a-zA-Z0-9:_]+)(?P=type)|
+            (?P<type>\+)(?P<xref>[a-zA-Z0-9:_]+)(?P=type)|
             %repeat%\(\s*(?P<repeat>.+?)\s*(,\s*['"](?P<separator>.*?)['"])?\s*(,\s*(?P<nodups>nodups))?\s*\)|
             %range%\((?P<start>.+?)-(?P<end>.+?)\)|
             %choice%\(\s*(?P<choices>.+?)\s*\)|
@@ -48,6 +45,8 @@ class Grammar(BaseGrammar):
         self.repeat_depth = 2
         self.max_group_size = 10
 
+        self.interactions = ['+', '-', '/', '*']
+
         for grammar in grammars:
             grammar_name = os.path.basename(grammar).replace('.dg', '')
             self.corpus[grammar_name] = self.parse(grammar)
@@ -56,23 +55,21 @@ class Grammar(BaseGrammar):
         self.unravel('controls')
         self.unravel('variables')
 
-        #logging.info('FINISHED UNRAVELING')
+        logging.info('FINISHED UNRAVELING')
 
-        # logging.debug('final actions:')
-        # logging.debug('\n'.join(self.corpus['actions']['regex']))
-        #
-        # logging.debug('final controls:')
-        # logging.debug('\n'.join(self.corpus['controls']['LanguageConstructs']))
-        #
-        # logging.debug('final variables:')
-        # logging.debug('\n'.join(self.corpus['variables']['regexptype']))
+        logging.debug('final actions:')
+        logging.debug('\n'.join(self.corpus['actions']['regex']))
+
+        logging.debug('final controls:')
+        logging.debug('\n'.join(self.corpus['controls']['LanguageConstructs']))
+
+        logging.debug('final variables:')
+        logging.debug('\n'.join(self.corpus['variables']['regexptype']))
 
         self.action_depth = 5
         self.action_size = 5
         self.control_depth = 1
         self.control_size = 1
-        self.variable_depth = 1
-        self.variable_size = 1
 
         self.actions = {}
         self.controls = {}
@@ -84,13 +81,16 @@ class Grammar(BaseGrammar):
         self.controls_pool = []
         self.variables_pool = []
 
+        self.curr_action = None
+        self.curr_control = None
+        self.curr_variable = None
+
         self.load_pools()
         self.load()
+        self.coverage = handler.CoverageHandler()
 
-        # self.coverage = handler.CoverageHandler()
-
-        self.wrapper = ('function f(){{ {} }} %%DebugPrint(f());'
-                        '%%OptimizeFunctionOnNextCall(f);%%DebugPrint(f());')
+        self.wrapper = ('function f(){{ {} }} %DebugPrint(f());'
+                        '%OptimizeFunctionOnNextCall(f);%DebugPrint(f());')
 
     def parse(self, grammar):
         with open(grammar, 'r') as f:
@@ -221,25 +221,15 @@ class Grammar(BaseGrammar):
     def parse_func(self, grammar, rule, history=None):
         if history is None:
             history = {}
-        #print('checking for funcs', grammar, rule)
 
         m = re.search(self.xref_re, rule, re.VERBOSE | re.DOTALL)
 
         if not m:
             return rule
 
-        if m.group('type') == '!':
-            part = rule[m.start('xref'):m.end('xref')]
-
-            #logging.info('got variable')
-            return self.parse_func(
-                grammar, rule.replace('!' + part + '!', 'var0'), history
-            )
-
         if m.group('repeat') is not None:
             repeat, separator, nodups = m.group('repeat', 'separator',
                                                 'nodups')
-            # print('repeat', repeat)
 
             if separator is not None:
                 end = m.end('separator') + 1
@@ -263,7 +253,6 @@ class Grammar(BaseGrammar):
                 if count >= self.repeat_depth:
                     no_repeats.append(no_repeat)
 
-            # print('repeat history:', history)
             search_space = len(xrefs)
             for i in range(repeat_power):
                 xref = random.choice(xrefs)
@@ -282,8 +271,6 @@ class Grammar(BaseGrammar):
                             count += 1
                             break
 
-                # print('picked:', xref)
-
                 out.append(xref)
 
             result = separator.join(out)
@@ -291,8 +278,6 @@ class Grammar(BaseGrammar):
             rule_l = rule[:m.start('repeat') - 1 - len('%repeat%')]
             rule_r = rule[end + 1:]
             result = rule_l + result + rule_r
-
-            #logging.info('parse repeat: %s', result)
 
             return self.parse_func(grammar, result, history)
 
@@ -304,8 +289,6 @@ class Grammar(BaseGrammar):
             rule_l = rule[:m.start('unique') - 1].replace('%unique%', '')
             rule_r = rule[m.end('unique') + 1:]
             result = rule_l + ''.join(random.choice(possible)) + rule_r
-
-            #logging.info('parse unique: %s', result)
 
             return self.parse_func(grammar, result, history)
 
@@ -324,8 +307,6 @@ class Grammar(BaseGrammar):
             rule_r = rule_r[rule_r.index(')') + 1:]
             result = rule_l + result + rule_r
 
-            #logging.info('parse range: %s', result)
-
             return self.parse_func(grammar, result, history)
 
         if m.group('type') == '+':
@@ -339,15 +320,13 @@ class Grammar(BaseGrammar):
                 rule_r = rule[m.end('xref') + 1:]
                 result = rule_l + expanded + rule_r
 
-                #logging.info('parse common: %s', result)
-
                 return self.parse_func(grammar, result, history)
 
     def load_cache(self, grammar, rules):
         '''
         loads a list of grammars and checks regex to output code
         '''
-        #logging.debug('loading %s:%s into cache', grammar, rules)
+        logging.debug('loading %s:%s into cache', grammar, rules)
         self.grammar_cache[grammar] = {}
 
         for rule in rules:
@@ -364,21 +343,39 @@ class Grammar(BaseGrammar):
         for rule, subrules in self.corpus['controls'].items():
             for i, subrule in enumerate(subrules):
                 self.controls[f'{rule}:{i}'] = subrule
-        for rule, subrules in self.corpus['variables'].items():
-            for i, subrule in enumerate(subrules):
-                self.variables[f'{rule}:{i}'] = subrule
+
+    def find_variables(self, actions):
+        variable_count = Counter()
+        for action in actions:
+            rule, index = action.split(':')
+            token = self.corpus['actions'][rule][int(index)]
+            variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
+
+            for match in re.finditer(variable_regex, token):
+                variable_count[match.group('xref')] += 1
+
+        return variable_count
+
+    def load_variables(self, actions):
+        variable_count = self.find_variables(actions)
+
+        variables = []
+        for variable, count in variable_count.items():
+            pool = self.corpus['variables'][variable]
+            count = min(count, len(pool))
+            count = random.randint(1, count)
+            selections = random.sample(range(len(pool)), count)
+            for selection in selections:
+                variables.append(variable + ':' + str(selection))
+
+        return variables
 
     def load(self):
-        while True:
-            self.actions_pool = random.sample(self.actions.keys(),
-                                              self.action_size)
-            self.controls_pool = random.sample(self.controls.keys(),
-                                               self.control_size)
-            self.variables_pool = random.sample(self.variables.keys(),
-                                                self.variable_size)
-            # if self.coverage.unique(self.actions_pool, self.controls_pool):
-            #     break
-            break
+        self.actions_pool = random.sample(self.actions.keys(),
+                                          self.action_size)
+        self.controls_pool = random.sample(self.controls.keys(),
+                                           self.control_size)
+        self.variables_pool = self.load_variables(self.actions_pool)
 
         self.load_cache('actions', self.actions_pool)
         self.load_cache('controls', self.controls_pool)
@@ -388,12 +385,10 @@ class Grammar(BaseGrammar):
                                                self.action_size)
         self.curr_controls = self.iterate_rules(self.control_depth,
                                                 self.control_size)
-        self.curr_variables = self.iterate_rules(self.variable_depth,
-                                                 self.variable_size)
 
         self.curr_action = next(self.curr_actions)
         self.curr_control = next(self.curr_controls)
-        self.curr_variable = next(self.curr_variables)
+        self.curr_variable = self.iterate_variables()
 
     def iterate_rules(self, depth, size):
         rules = [0]
@@ -411,38 +406,92 @@ class Grammar(BaseGrammar):
 
         yield None
 
+    def iterate_variables(self):
+        if self.curr_action is None:
+            return self.curr_action
+
+        actions = [self.actions_pool[i] for i in self.curr_action]
+        variable_count = self.find_variables(actions)
+
+        variables = {}
+        for variable in self.variables_pool:
+            name, _ = variable.split(':')
+            if name not in variables:
+                variables[name] = []
+            variables[name].append(variable)
+
+        result = []
+        for variable, count in variable_count.items():
+            # count = min(count, len(variables[variable]))
+            count = random.randint(1, count)
+            for _ in range(count):
+                result.append(random.choice(variables[variable]))
+
+        return result
+
     def generate(self):
+        # Generate new variables everytime we iterate actions
+        # Run out of actions, do it again with next control
+        # Run out of controls, reload
         if self.curr_action is None:
             self.curr_actions = self.iterate_rules(self.action_depth,
                                                    self.action_size)
             self.curr_action = next(self.curr_actions)
+            self.curr_variable = self.iterate_variables()
             self.curr_control = next(self.curr_controls)
             if self.curr_control is None:
-                self.curr_controls = self.iterate_rules(self.control_depth,
-                                                        self.control_size)
-                self.curr_control = next(self.curr_controls)
-                self.curr_variable = next(self.curr_variables)
-                if self.curr_variable is None:
-                    # while self.coverage.get_count() < self.curr_combs:
-                    #     time.sleep(0.5)
-                    #
-                    # self.coverage.score(self.actions_pool, self.controls_pool,
-                    #                     self.action_depth, self.control_depth)
-                    # self.coverage.reset(self.actions_pool, self.controls_pool)
-                    self.curr_combs = 0
-                    self.load()
+                self.logger.info('Finish Generation')
+                while not self.coverage.up_to_date():
+                    print(self.coverage.redis.get('processed'))
+                    print(self.coverage.redis.get('generated'))
+                    time.sleep(0.5)
+                self.load()
+                self.coverage.reset()
+                self.logger.info('New Set')
 
-        actions = [self.grammar_cache['actions'][self.actions_pool[i]]
-                   for i in self.curr_action]
+        actions = [self.actions_pool[i] for i in self.curr_action]
         controls = [self.grammar_cache['controls'][self.controls_pool[i]]
                     for i in self.curr_control]
-        variables = [self.grammar_cache['variables'][self.variables_pool[i]]
-                     for i in self.curr_variable]
 
         lines = []
-        for i, variable in enumerate(variables):
-            lines.append(f'var var{i} = {variable}')
-        lines += actions
+        assigned_variables = {}
+        resolved_variables = {}
+        variable_list = []
+        for i, variable in enumerate(self.curr_variable):
+            rule = variable.split(':')[0]
+            if rule not in assigned_variables:
+                assigned_variables[rule] = []
+            curr_var = f'var{i}'
+
+            assigned_variables[rule].append(curr_var)
+            variable_list.append(curr_var)
+            resolved = self.grammar_cache['variables'][variable]
+            resolved_variables[curr_var] = variable
+            lines.append(f'var {curr_var}={resolved}')
+
+        random.shuffle(actions)
+        assigned_variables_copy = copy.deepcopy(assigned_variables)
+        actions_to_variables = []
+        for action in actions:
+            resolved = self.grammar_cache['actions'][action]
+            variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
+            m = re.search(variable_regex, resolved)
+            rule = m.group('xref')
+            if assigned_variables[rule]:
+                choice = assigned_variables[rule].pop()
+            else:
+                choice = random.choice(assigned_variables_copy[rule])
+
+            actions_to_variables.append((action, choice))
+            lines.append(resolved.replace(f'!{rule}!', choice))
+
+        equation = '{}'.join(variable_list)
+        interactions = []
+        for _ in range(len(variable_list) - 1):
+            interactions.append(random.choice(self.interactions))
+        equation = equation.format(*interactions)
+        lines.append('var result=' + equation)
+
         controls_fmt = []
         for control in controls:
             controls_fmt.append(control.replace('#actions#', '{}'))
@@ -451,90 +500,27 @@ class Grammar(BaseGrammar):
         for control in controls_fmt:
             control_wrapper = control_wrapper.format(control)
 
-        control_wrapper = control_wrapper.format(';'.join(lines) + ';')
+        control_wrapper = control_wrapper.format(';'.join(lines))
+
+        result = self.wrapper.format(control_wrapper)
+        result = "'" + result + "'"
+
+        id = ';'.join([':'.join(map(str, self.curr_action)),
+                       ':'.join(map(str, self.curr_control))])
+        final = len(self.curr_action) == self.action_depth
+        self.coverage.store(id, actions_to_variables, resolved_variables,
+                            controls, interactions, final)
 
         self.curr_action = next(self.curr_actions)
+        self.curr_variable = self.iterate_variables()
 
-        control_wrapper = ';'.join(lines) + ';'
-
-        return self.wrapper.format(control_wrapper)
-
-    def generate_group(self):
-        # group = {actions: [{'action': regex:0, 'var': True},
-        #                    {'action': regex:1, 'var': False'}],
-        #          interactions: ['+']}
-        g = Group(3)#random.randint(3, self.max_group_size))
-        for i in range(g.size):
-            var_choice = [True, False]
-            if f"var{i}" == "var0":
-                var_choice = [var_choice[0]]
-            
-            g.actions.append(
-                    {
-                        f'var{i}': (random.choice(var_choice),
-                                    random.choice(list(self.variables.keys()))
-                                    ),
-                        f'action{i}': random.choice(list(self.actions.keys()))
-                    }
-                )
-        return g
-
-    def generate_groups(self, n):
-        for i in range(n):
-            yield self.generate_group()
-    """
-    def gen_gramm_from_group(self, group):
-        # can test once edge cases are worked
-        cache = defaultdict(list)
-        gramm = "regexp"
-        true_count = 0
-        for action in group.actions:
-            for k,v in action.items():
-                if "var" in k:
-                    res, rule = v 
-                    if res:
-                        true_count += 1
-                        new_rule = self.parse_func(gramm, self.variables[rule])
-                        cache["vars"].append(new_rule)
-                        action[k] = new_rule
-                    else:
-                        action[k] = random.choice((cache["vars"]))
-                if "action" in k:
-                    if res:
-                        true_count += 1
-                        new_rule = self.parse_func(gramm, self.actions[v])
-                        action[k] = new_rule
- 
-        group.display()
-    """     
-    def gen_group_from_gramm(self, group):
-        pass
-
-    def mutate_group(self, group):
-        pass
+        return (id, result)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    templates = os.path.join(current_dir, 'templates')
-
-    dependencies = os.path.join(templates, 'dependencies')
-    grammar_deps = [
-        os.path.join(dependencies, grammar)
-        for grammar in os.listdir(os.path.join(dependencies))
-    ]
-
-    actions = os.path.join(templates, 'actions.dg')
-    controls = os.path.join(templates, 'controls.dg')
-    variables = os.path.join(templates, 'variables.dg')
-    
-    grammar = Grammar(grammar_deps + [actions, controls, variables])
-    #for i in range(10):
-    #    print(grammar.generate())
-    """
-    count = 10000
-    for _ in range(10000):
-    print(f'generating {count} took: {time.time() - start} seconds')
-    """
+    grammar = Grammar()
+    while True:
+        grammar.generate()
+        break

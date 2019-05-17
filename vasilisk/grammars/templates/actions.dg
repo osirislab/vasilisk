@@ -1,14 +1,14 @@
 regex :=
-    !regexp:regexp!.flags = "+regexp:flags+"
-    !regexp:regexp!.global = +common:bool+
-    !regexp:regexp!.ignoreCase = +common:bool+
-    !regexp:regexp!.multiline = +common:bool+
-    !regexp:regexp!.sticky = +common:bool+
-    !regexp:regexp!.unicode = +common:bool+
-    !regexp:regexp!.exec("+common:text+")
-    !regexp:regexp!.test("+common:text+")
-    !regexp:regexp!.toString()
-    !regexp:regexp!.lastIndex
-    !regexp:regexp!.compile()
-    "+common:text+".split(!regexp:regexp!)
-    "+common:text+".split(!regexp:regexp!, +common:int+)
+    !regexptype!.flags = "+regexp:flags+"
+    !regexptype!.global = +common:bool+
+    !regexptype!.ignoreCase = +common:bool+
+    !regexptype!.multiline = +common:bool+
+    !regexptype!.sticky = +common:bool+
+    !regexptype!.unicode = +common:bool+
+    !regexptype!.exec("+common:text+")
+    !regexptype!.test("+common:text+")
+    !regexptype!.toString()
+    !regexptype!.lastIndex
+    !regexptype!.compile()
+    "+common:text+".split(!regexptype!)
+    "+common:text+".split(!regexptype!, +common:int+)
