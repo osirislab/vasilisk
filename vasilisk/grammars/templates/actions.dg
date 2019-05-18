@@ -12,3 +12,193 @@ regex :=
     !regexp:regexp!.compile()
     "+common:text+".split(!regexp:regexp!)
     "+common:text+".split(!regexp:regexp!, +common:int+)
+
+array :=
+    !array:arrtype![+common:int+]
+    !array:arrtype![+common:decimal_number+]
+    delete !array:arrtype![+common:byte_int+]
+    !array:arrtype!.length
+    !array:arrtype!.length = +value:valtype+
+    !array:arrtype!.copyWithin(+common:int+)
+    !array:arrtype!.copyWithin(+common:int+, +common:int+)
+    !array:arrtype!.copyWithin(+common:int+, +common:int+, +common:int+)
+    !array:arrtype!.fill(+value:valtype+)
+    !array:arrtype!.fill(+value:valtype+, +common:int+)
+    !array:arrtype!.fill(+value:valtype+, +common:int+, +common:int+)
+    !array:arrtype!.pop()
+    !array:arrtype!.push(+value:valtype+)
+    !array:arrtype!.reverse()
+    !array:arrtype!.shift()
+    !array:arrtype!.sort(+callback:two_op_compare+)
+    !array:arrtype!.splice(+common:int+, +common:int+, %repeat%(+value:valtype+, ", "))
+    !array:arrtype!.unshift(%repeat%(+value:valtype+, ", "))
+    @arr@ = Array.prototype.concat(!array:arrtype!, +any_arr+)
+    !array:arrtype!.includes(+value:valtype+)
+    !array:arrtype!.indexOf(+value:valtype+)
+    !array:arrtype!.join()
+    !array:arrtype!.join(+value:valtype+)
+    !array:arrtype!.lastIndexOf(+value:valtype+)
+    !array:arrtype!.entries()
+    !array:arrtype!.slice()
+    !array:arrtype!.slice(+common:int+)
+    !array:arrtype!.slice(+common:int+, +common:int+)
+    !array:arrtype!.toString()
+    !array:arrtype!.toLocaleString()
+    !array:arrtype!.toLocaleString(+intl:locale_str+)
+    !array:arrtype!.every(+callback:one_op_predicate+)
+    !array:arrtype!.filter(+callback:one_op_predicate+)
+    !array:arrtype!.find(+callback:find_callback+)
+    !array:arrtype!.findIndex(+callback:find_callback+)
+    !array:arrtype!.forEach(+callback:one_op_predicate+)
+    !array:arrtype!.keys()
+    !array:arrtype!.map(+callback:map_callback+)
+    !array:arrtype!.reduce(+callback:reduce_callback+, +value:valtype+)
+    !array:arrtype!.reduceRight(+callback:reduce_callback+, +value:valtype+)
+    !array:arrtype!.some(+callback:one_op_predicate+)
+    !array:arrtype!.values()
+    !array:arrtype![+common:int+ % +any_arr+.length]
+    !array:arrtype![+common:int+ % +any_arr+.length] = +value:valtype+
+    !array:arrtype![+common:int+] = +value:valtype+
+    !array:arrtype![+common:decimal_number+] = +value:valtype+
+
+boolean :=
+    !boolean:bool!.toString()
+    !boolean:bool!.valueOf()
+
+arguments := 
+    +argument:argtype+.callee
+    +arguments:argtype+.length
+    +arguments:argtype+.toString()
+    +arguments:argtype+.toLocaleString()
+    +arguments:argtype+.valueOf()
+    +arguments:argtype+[+common:int+]
+    +arguments:argtype+[+common:int+] = +value:valtype+
+
+buffer :=
+    ArrayBuffer.isView(!buffer:arraybuffertype!)
+    ArrayBuffer.transfer(!buffer:arraybuffertype!)
+    ArrayBuffer.transfer(!buffer:arraybuffertype!, +common:int+)
+    !buffer:arraybuffertype!.slice(+common:positive_integer+)
+    !buffer:arraybuffertype!.slice(+common:positive_integer+, +common:positive_integer+)
+    !buffer:typedarraytype!.buffer
+    !buffer:typedarraytype!.byteLength
+    !buffer:typedarraytype!.byteOffset
+    !buffer:typedarraytype!.length
+    !buffer:typedarraytype!.copyWithin(+common:positive_integer+, +common:positive_integer+)
+    !buffer:typedarraytype!.copyWithin(+common:positive_integer+, +common:positive_integer+, +common:positiv    e_integer+)
+    !buffer:typedarraytype!.entries()
+    !buffer:typedarraytype!.every(+callback:one_op_predicate+)
+    !buffer:typedarraytype!.fill(+value:valtype+)
+    !buffer:typedarraytype!.filter(+callback:one_op_predicate+)
+    !buffer:typedarraytype!.find(+callback:find_callback+)
+    !buffer:typedarraytype!.findIndex(+callback:find_callback+)
+    !buffer:typedarraytype!.forEach(+callback:foreach_callback+)
+    !buffer:typedarraytype!.includes(+value:valtype+)
+    !buffer:typedarraytype!.includes(+value:valtype+, +common:positive_integer+)
+    !buffer:typedarraytype!.indexOf(+value:valtype+)
+    !buffer:typedarraytype!.indexOf(+value:valtype+, +common:positive_integer+)
+    !buffer:typedarraytype!.join()
+    !buffer:typedarraytype!.join(+value:valtype+)
+    !buffer:typedarraytype!.keys()
+    !buffer:typedarraytype!.lastIndexOf(+value:valtype+)
+    !buffer:typedarraytype!.lastIndexOf(+value:valtype+, +common:positive_integer+)
+    !buffer:typedarraytype!.map(+callback:map_callback+)
+    !buffer:typedarraytype!.reduce(+callback:reduce_callback+, +value:valtype+)
+    !buffer:typedarraytype!.reduceRight(+callback:reduce_callback+, +value:valtype+)
+    !buffer:typedarraytype!.reverse()
+    !buffer:typedarraytype!.set(+value:valtype+)
+    !buffer:typedarraytype!.set(+value:valtype+, +common:positive_integer+)
+    !buffer:typedarraytype!.slice()
+    !buffer:typedarraytype!.slice(+common:integer+)
+    !buffer:typedarraytype!.slice(+common:integer+, +common:integer+)
+    !buffer:typedarraytype!.some(+callback:one_op_predicate+)
+    !buffer:typedarraytype!.sort(+callback:two_op_compare+)
+    !buffer:typedarraytype!.subarray()
+    !buffer:typedarraytype!.subarray(+common:integer+, +common:integer+)
+    !buffer:typedarraytype!.values()
+    !buffer:typedarraytype!.toLocaleString()
+    !buffer:typedarraytype!.toString()
+    !buffer:typedarraytype![Symbol.iterator]()
+
+any_callback :=
+    +callback:simple_callback+
+    +callback:one_op_predicate+
+    +callback:two_op_compare+
+    +callback:find_callback+
+    +callback:map_callback+
+    +callback:reduce_callback+
+    +callback:foreach_callback+
+    +callback:string_replace_callback+  
+
+dataview :=
+    !buffer:dataviewtype!.buffer
+    !buffer:dataviewtype!.buffer = +dataviewbuffer+
+    !buffer:dataviewtype!.byteLength
+    !buffer:dataviewtype!.byteLength = +common:int+
+    !buffer:dataviewtype!.byteOffset
+    !buffer:dataviewtype!.byteOffset = +common:int+
+    !buffer:dataviewtype!.getInt8(+get_args+)
+    !buffer:dataviewtype!.getUInt8(+get_args+)
+    !buffer:dataviewtype!.getInt16(+get_args+)
+    !buffer:dataviewtype!.getUInt16(+get_args+)
+    !buffer:dataviewtype!.getInt32(+get_args+)
+    !buffer:dataviewtype!.getUInt32(+get_args+)
+    !buffer:dataviewtype!.getFloat32(+get_args+)
+    !buffer:dataviewtype!.getFloat64(+get_args+)
+    !buffer:dataviewtype!.setInt8(+set_args+)
+    !buffer:dataviewtype!.setUInt8(+set_args+)
+    !buffer:dataviewtype!.setInt16(+set_args+)
+    !buffer:dataviewtype!.setUInt16(+set_args+)
+    !buffer:dataviewtype!.setInt32(+set_args+)
+    !buffer:dataviewtype!.setUInt32(+set_args+)
+    !buffer:dataviewtype!.setFloat32(+set_args+)
+    !buffer:dataviewtype!.setFloat64(+set_args+)
+
+date :=
+    Date.now()
+   !date:datetype!.getDate()
+   !date:datetype!.getDay()
+   !date:datetype!.dateFullYear()
+   !date:datetype!.getHours()
+   !date:datetype!.getMilliseconds()
+   !date:datetype!.getMinutes()
+   !date:datetype!.getMonth()
+   !date:datetype!.getSeconds()
+   !date:datetype!.getTime()
+   !date:datetype!.getTimezoneOffset()
+   !date:datetype!.getUTCDate()
+   !date:datetype!.getUTCDay()
+   !date:datetype!.getUTCFullYear()
+   !date:datetype!.getUTCHours()
+   !date:datetype!.getUTCMilliseconds()
+   !date:datetype!.getUTCMinutes()
+   !date:datetype!.getUTCMonth()
+   !date:datetype!.getUTCSeconds()
+   !date:datetype!.getYear()
+   !date:datetype!.setDate(+common:int+)
+   !date:datetype!.setFullYear(+common:int+)
+   !date:datetype!.setHours(+common:int+)
+   !date:datetype!.setMilliseconds(+common:int+)
+   !date:datetype!.setMinutes(+common:int+)
+   !date:datetype!.setMonth(+common:int+)
+   !date:datetype!.setSeconds(+common:int+)
+   !date:datetype!.setTime(+common:int+)
+   !date:datetype!.setUTCDate(+common:int+)
+   !date:datetype!.setUTCFullYear(+common:int+)
+   !date:datetype!.setUTCHours(+common:int+)
+   !date:datetype!.setUTCMilliseconds(+common:int+)
+   !date:datetype!.setUTCMinutes(+common:int+)
+   !date:datetype!.setUTCMonth(+common:int+)
+   !date:datetype!.setUTCSeconds(+common:int+)
+   !date:datetype!.setYear(+common:int+)
+   !date:datetype!.toDateSTring()
+   !date:datetype!.toISOString()
+   !date:datetype!.toJSON()
+   !date:datetype!.toGMTString()
+   !date:datetype!.toLocaleDateString()
+   !date:datetype!.toLocaleString()
+   !date:datetype!.toLocaleTimeString()
+   !date:datetype!.toString()
+   !date:datetype!.toTimeString()
+   !date:datetype!.toUTCString()
+   !date:datetype!.valueOf()

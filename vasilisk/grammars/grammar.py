@@ -6,10 +6,8 @@ import re
 import time
 
 # from coverage.iterative import handler
-
 from base import BaseGrammar
 from collections import defaultdict
-
 
 class Group:
     def __init__(self, size):
@@ -29,7 +27,6 @@ class Group:
 
         print('---------------------')
         print(f'-> interaction: {self.interactions}')
-
 
 class Grammar(BaseGrammar):
     def __init__(self, grammars, repeat=4):
@@ -451,6 +448,7 @@ class Grammar(BaseGrammar):
         for control in controls_fmt:
             control_wrapper = control_wrapper.format(control)
 
+
         control_wrapper = control_wrapper.format(';'.join(lines) + ';')
 
         self.curr_action = next(self.curr_actions)
@@ -531,8 +529,8 @@ if __name__ == '__main__':
     variables = os.path.join(templates, 'variables.dg')
     
     grammar = Grammar(grammar_deps + [actions, controls, variables])
-    #for i in range(10):
-    #    print(grammar.generate())
+    for i in range(10):
+        print(grammar.generate())
     """
     count = 10000
     for _ in range(10000):

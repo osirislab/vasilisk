@@ -1,5 +1,8 @@
+LanguageConstructs :=
+    #actions#; return var0
+
 if :=
-    if (#actions) {+number:statement+;}
+    if (#actions#) {+number:statement+;}
     if (+common:bool+) {+array:statement+;} else {+array:statement+;}
     if (+value:valtype+ === +value:valtype+) {!value:statement} else if {+math:statement+;} else {+math:statement+}
     if(+boolean:statement+){+if+} else {+if+}
@@ -8,8 +11,8 @@ if :=
     if(+boolean:statement+){+while+} else {+for+}
 
 ternary :=
-    (+boolean:statement+ ? +object:statement+ : #actions);
-    (+boolean:statement+ ? +object:+ : #actions);
+    (+boolean:statement+ ? +object:statement+ : #actions#);
+    (+boolean:statement+ ? +object:+ : #actions#);
     (+boolean:statement+ ? +callback:any_callback+ : +callback:any_callback+);
     (+boolean:statement+ ? +object:statement+ : +object:statement+);
     

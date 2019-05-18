@@ -9,7 +9,6 @@ one_op_predicate :=
     function(thing) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
     async function(thing) { %repeat%(+driver:statement+, ";"); return +common:bool+; }
 
-
 compare_pred :=
     arg1 < arg2
     arg1 > arg2

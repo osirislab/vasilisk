@@ -3,3 +3,44 @@ regexptype :=
     new RegExp("+regexp:pattern+")
     RegExp("+regexp:pattern+", "+regexp:flags+")
     RegExp("+regexp:pattern+")
+
+arrtype :=
+    [%repeat%(+value:valtype+, ",")]
+    [%repeat%(+common:decimal_number+, ",")]
+    new Array(+common:short_int+)
+    new Proxy(+arrtype+, +proxy:proxyhandler+)
+
+bool :=
+    true
+    false
+    Boolean(+value:valtype+)                                                                         
+    new Boolean(+value:valtype+)
+
+arraybuffertype :=
+    new ArrayBuffer(+common:positive_integer+)
+
+typedarraytype :=
+    new +buffer:typedarraykind+(+buffer:typedarrayarg+)
+
+dataviewtype :=
+    (new DataView(+dataview:dataviewbuffer+))
+    (new DataView(+dataview:dataviewbuffer+, +common:int+))
+    (new DataView(+dataview:dataviewbuffer+, +common:int+, +common:int+)
+
+datetype :=
+   Date()
+   Date.parse("+common:text+")
+   new Date()
+   new Date(+common:int+)
+   new Date(+common:int+, +common:int+)
+   new Date(+common:int+, +common:int+, +common:int+)
+   new Date(+common:int+, +common:int+, +common:int+, +common:int+)
+   new Date(+common:int+, +common:int+, +common:int+, +common:int+, +common:int+)
+   new Date(+common:int+, +common:int+, +common:int+, +common:int+, +common:int+, +common:int+)
+   new Date.UTC()
+   new Date.UTC(+common:int+)
+   new Date.UTC(+common:int+, +common:int+)
+   new Date.UTC(+common:int+, +common:int+, +common:int+)
+   new Date.UTC(+common:int+, +common:int+, +common:int+, +common:int+)
+   new Date.UTC(+common:int+, +common:int+, +common:int+, +common:int+, +common:int+)
+   new Date.UTC(+common:int+, +common:int+, +common:int+, +common:int+, +common:int+, +common:int+)
