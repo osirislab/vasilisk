@@ -19,7 +19,7 @@ class GroupFuzzer(BaseFuzzer):
         self.tests = tests
         self.debug = debug
 
-        coverage_dir = os.path.join('/dev/shm', 'vasilisk_coverage')
+        coverage_dir = os.path.join('/tmp', 'vasilisk_coverage')
         if not os.path.exists(coverage_dir):
             self.logger.info('creating coverage dir')
             os.makedirs(coverage_dir)
@@ -43,10 +43,13 @@ class GroupFuzzer(BaseFuzzer):
 
         cmd = ' '.join([self.d8] + options + [test_case])
         try:
-            return subprocess.check_output(cmd, shell=True)
+            return subprocess.check_output(cmd, shell=True, timeout=5)
+        except subprocess.TimeoutExpired as e:
+            self.logger.error(e)
+            return 'Invalid'
         except subprocess.CalledProcessError as e:
             if int(e.returncode) == 1:
-                return 'Syntax Error'
+                return 'Invalid'
             self.logger.error(e)
             return None
 
@@ -70,7 +73,7 @@ class GroupFuzzer(BaseFuzzer):
             self.coverage.invalid(id)
 
     def validate(self, output):
-        if output is 'Syntax Error':
+        if output is 'Invalid':
             return -1
         if output is not None:
             return 0

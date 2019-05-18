@@ -5,10 +5,6 @@
 any_object :=
     +value:valtype+
 
-
-statement :=
-    !obj![+common:decimal_number+] = +value:valtype+
-
 name_value_pair :=
     "+common:text+": +value:valtype+
 

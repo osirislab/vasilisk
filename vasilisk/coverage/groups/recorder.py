@@ -13,7 +13,7 @@ class CoverageRecorder:
             with open(turbo_json, 'r') as f:
                 turbo = json.loads(f.read())
         except json.decoder.JSONDecodeError:
-            print(turbo_json)
+            return None
 
         skip = ['before register allocation', 'after register allocation',
                 'schedule', 'effect linearization schedule',
@@ -31,6 +31,8 @@ class CoverageRecorder:
 
     def metrics(self, turbo_json):
         turbo = self.parse(turbo_json)
+        if turbo is None:
+            return 0
 
         differences = {}
         prev = {}
@@ -51,7 +53,11 @@ class CoverageRecorder:
 
             prev = nodes
 
-        return differences
+        total = 0
+        for changes in differences.values():
+            total += sum(changes.values())
+
+        return total
 
     def found(self, id):
         self.redis.set(f'score:{id}', 9999)
@@ -63,9 +69,7 @@ class CoverageRecorder:
 
     def record(self, id, case, turbo_path):
         turbo_json = os.path.join(turbo_path, 'turbo-f-0.json')
-        total = 0
-        for changes in self.metrics(turbo_json).values():
-            total += sum(changes.values())
+        total = self.metrics(turbo_json)
 
         if ':' in id:
             parent_id = id[id.index(':') + 1:]

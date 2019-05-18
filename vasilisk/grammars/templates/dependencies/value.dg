@@ -17,12 +17,3 @@ valtype :=
     +array:arrtype+
     +object:objtype+
     +symbol:symboltype+
-    +callback:any_callback+
-
-%section% := variable
-
-val :=
-    var @val@; try { @val@ = +common:int+; } catch (e) {}
-    var @val@; try { @val@ = @object:obj@; } catch (e) {}
-    var @val@; try { @val@ = @array:arr@; } catch (e) {}
-    var @val@; try { @val@ = @date:date@; } catch (e) {}
