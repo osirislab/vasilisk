@@ -2,7 +2,6 @@
 
 arraybuffertype :=
     new ArrayBuffer(+common:positive_integer+)
-    new Proxy(+arraybuffertype+, +proxy:proxyhandler+)
 
 typedarrayarg :=
     +common:positive_integer+
@@ -24,14 +23,11 @@ typedarraykind :=
 
 typedarraytype :=
     new +typedarraykind+(+typedarrayarg+)
-    new Proxy(+typedarraytype+, +proxy:proxyhandler+)
 
 any_arraybuffer :=
-    !arraybuffer!
     +arraybuffertype+
 
 any_typedarray :=
-    !typedarray!
     +typedarraytype+
 
 statement :=
@@ -79,11 +75,3 @@ statement :=
     +any_typedarray+.toLocaleString()
     +any_typedarray+.toString()
     +any_typedarray+[Symbol.iterator]()
-
-%section% := variable
-
-arraybuffer :=
-    var @arraybuffer@; try { @arraybuffer@ = +arraybuffertype+; } catch (e) {}
-
-typedarray :=
-    var @typedarray@; try { @typedarray@ = +typedarraytype+; } catch (e) {}

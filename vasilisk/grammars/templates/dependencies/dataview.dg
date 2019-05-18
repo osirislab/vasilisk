@@ -2,7 +2,6 @@
 
 dataviewbuffer :=
     +buffer:arraybuffertype+
-    !buffer:arraybuffer!
 
 dataviewtype :=
     (new DataView(+dataviewbuffer+))
@@ -48,8 +47,3 @@ statement :=
     +any_dataview+.setUInt32(+set_args+)
     +any_dataview+.setFloat32(+set_args+)
     +any_dataview+.setFloat64(+set_args+)
-
-%section% := variable
-
-dataview :=
-    var @dataview@; try { @dataview@ = +dataviewtype+; } catch (e) {}

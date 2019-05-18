@@ -10,7 +10,6 @@ normalize_form :=
 stringtype :=
     "+common:text+"
     new String("+common:text+")
-    new Proxy(+stringtype+, +proxy:proxyhandler+)
 
 
 any_string :=

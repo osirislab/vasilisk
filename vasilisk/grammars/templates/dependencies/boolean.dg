@@ -5,17 +5,10 @@ booltype :=
     false
     Boolean(+value:valtype+)
     new Boolean(+value:valtype+)
-    new Proxy(+booltype+, +proxy:proxyhandler+)
 
 any_bool :=
-    !bool!
     +booltype+
 
 statement :=
     +any_bool+.toString()
     +any_bool+.valueOf()
-
-%section% := variable
-
-bool :=
-    var @bool@; try { @bool@ = +booltype+; } catch (e) {}

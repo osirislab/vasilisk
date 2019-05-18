@@ -1,7 +1,6 @@
 %section% := value
 
 any_arr :=
-    !arr!
     +arrtype+
 
 
@@ -24,7 +23,6 @@ statement :=
     +any_arr+.sort(+callback:two_op_compare+)
     +any_arr+.splice(+common:int+, +common:int+, %repeat%(+value:valtype+, ", "))
     +any_arr+.unshift(%repeat%(+value:valtype+, ", "))
-    @arr@ = Array.prototype.concat(+any_arr+, +any_arr+)
     +any_arr+.includes(+value:valtype+)
     +any_arr+.indexOf(+value:valtype+)
     +any_arr+.join()
@@ -57,9 +55,3 @@ arrtype :=
     [%repeat%(+value:valtype+, ",")]
     [%repeat%(+common:decimal_number+, ",")]
     new Array(+common:short_int+)
-    new Proxy(+arrtype+, +proxy:proxyhandler+)
-
-%section% := variable
-
-arr :=
-    var @arr@; try { @arr@ = +arrtype+; } catch (e) {}

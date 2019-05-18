@@ -17,7 +17,6 @@ datetype :=
     new Date.UTC(+common:int+, +common:int+, +common:int+, +common:int+)
     new Date.UTC(+common:int+, +common:int+, +common:int+, +common:int+, +common:int+)
     new Date.UTC(+common:int+, +common:int+, +common:int+, +common:int+, +common:int+, +common:int+)
-    new Proxy(+datetype+, +proxy:proxyhandler+)
 
 
 statement :=

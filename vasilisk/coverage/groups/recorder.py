@@ -9,8 +9,11 @@ class CoverageRecorder:
                                  decode_responses=True)
 
     def parse(self, turbo_json):
-        with open(turbo_json, 'r') as f:
-            turbo = json.loads(f.read())
+        try:
+            with open(turbo_json, 'r') as f:
+                turbo = json.loads(f.read())
+        except json.decoder.JSONDecodeError:
+            print(turbo_json)
 
         skip = ['before register allocation', 'after register allocation',
                 'schedule', 'effect linearization schedule',

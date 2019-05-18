@@ -6,7 +6,6 @@ set_arg :=
 
 settype :=
     new Set(+set_arg+)
-    new Proxy(+settype+, +proxy:proxyhandler+)
 
 any_set :=
     !set!

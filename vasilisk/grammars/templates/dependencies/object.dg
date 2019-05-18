@@ -3,7 +3,6 @@
 %section% := value
 
 any_object :=
-    !obj!
     +value:valtype+
 
 
@@ -15,9 +14,3 @@ name_value_pair :=
 
 objtype :=
     {%repeat%(+name_value_pair+, ",")}
-    new Proxy({%repeat%(+name_value_pair+, ",")}, +proxy:proxyhandler+)
-
-%section% := variable
-
-obj :=
-    var @obj@; try { @obj@ = +objtype+; } catch (e) {}

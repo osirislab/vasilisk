@@ -12,7 +12,6 @@ symboltype :=
     Symbol.species
     Symbol.toPrimitive
     Symbol.toStringTag
-    new Proxy(+symboltype+, +proxy:proxyhandler+)
 
 statement :=
     !symbol!.toString()

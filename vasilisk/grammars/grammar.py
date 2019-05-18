@@ -19,7 +19,7 @@ class Grammar(BaseGrammar):
 
         current_dir = os.path.dirname(os.path.realpath(__file__))
         templates = os.path.join(current_dir, 'templates')
-        
+
         dependencies = os.path.join(templates, 'dependencies')
         grammar_deps = [
             os.path.join(dependencies, grammar)
@@ -322,193 +322,195 @@ class Grammar(BaseGrammar):
 
                 return self.parse_func(grammar, result, history)
 
-                '''
-            loads a list of grammars and checks regex to output code
-            '''
-            logging.debug('loading %s:%s into cache', grammar, rules)
-            self.grammar_cache[grammar] = {}
+    def load_cache(self, grammar, rules):
+        '''
+        loads a list of grammars and checks regex to output code
+        '''
+        logging.debug('loading %s:%s into cache', grammar, rules)
+        self.grammar_cache[grammar] = {}
 
-            for rule in rules:
-                rule_name, index = rule.split(':')
-                subrule = self.corpus[grammar][rule_name][int(index)]
+        for rule in rules:
+            rule_name, index = rule.split(':')
+            subrule = self.corpus[grammar][rule_name][int(index)]
 
-                self.grammar_cache[grammar][rule] = self.parse_func(grammar,
-                                                                    subrule)
+            self.grammar_cache[grammar][rule] = self.parse_func(grammar,
+                                                                subrule)
 
-        def load_pools(self):
-            for rule, subrules in self.corpus['actions'].items():
-                for i, subrule in enumerate(subrules):
-                    self.actions[f'{rule}:{i}'] = subrule
-            for rule, subrules in self.corpus['controls'].items():
-                for i, subrule in enumerate(subrules):
-                    self.controls[f'{rule}:{i}'] = subrule
+    def load_pools(self):
+        for rule, subrules in self.corpus['actions'].items():
+            for i, subrule in enumerate(subrules):
+                self.actions[f'{rule}:{i}'] = subrule
+        for rule, subrules in self.corpus['controls'].items():
+            for i, subrule in enumerate(subrules):
+                self.controls[f'{rule}:{i}'] = subrule
 
-        def find_variables(self, actions):
-            variable_count = Counter()
-            for action in actions:
-                rule, index = action.split(':')
-                token = self.corpus['actions'][rule][int(index)]
-                variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
+    def find_variables(self, actions):
+        variable_count = Counter()
+        for action in actions:
+            rule, index = action.split(':')
+            token = self.corpus['actions'][rule][int(index)]
+            variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
 
-                for match in re.finditer(variable_regex, token):
-                    variable_count[match.group('xref')] += 1
+            for match in re.finditer(variable_regex, token):
+                variable_count[match.group('xref')] += 1
 
-            return variable_count
+        return variable_count
 
-        def load_variables(self, actions):
-            variable_count = self.find_variables(actions)
+    def load_variables(self, actions):
+        variable_count = self.find_variables(actions)
 
-            variables = []
-            for variable, count in variable_count.items():
-                pool = self.corpus['variables'][variable]
-                count = min(count, len(pool))
-                count = random.randint(1, count)
-                selections = random.sample(range(len(pool)), count)
-                for selection in selections:
-                    variables.append(variable + ':' + str(selection))
+        variables = []
+        for variable, count in variable_count.items():
+            self.logger.debug('Variable %s with count %s', variable, count)
+            pool = self.corpus['variables'][variable]
+            count = min(count, len(pool))
+            count = random.randint(1, count)
+            selections = random.sample(range(len(pool)), count)
+            for selection in selections:
+                variables.append(variable + ':' + str(selection))
 
-            return variables
+        return variables
 
-        def load(self):
-            self.actions_pool = random.sample(self.actions.keys(),
-                                              self.action_size)
-            self.controls_pool = random.sample(self.controls.keys(),
-                                               self.control_size)
-            self.variables_pool = self.load_variables(self.actions_pool)
+    def load(self):
+        self.actions_pool = random.sample(self.actions.keys(),
+                                          self.action_size)
+        self.controls_pool = random.sample(self.controls.keys(),
+                                           self.control_size)
+        self.variables_pool = self.load_variables(self.actions_pool)
 
-            self.load_cache('actions', self.actions_pool)
-            self.load_cache('controls', self.controls_pool)
-            self.load_cache('variables', self.variables_pool)
+        self.load_cache('actions', self.actions_pool)
+        self.load_cache('controls', self.controls_pool)
+        self.load_cache('variables', self.variables_pool)
 
+        self.curr_actions = self.iterate_rules(self.action_depth,
+                                               self.action_size)
+        self.curr_controls = self.iterate_rules(self.control_depth,
+                                                self.control_size)
+
+        self.curr_action = next(self.curr_actions)
+        self.curr_control = next(self.curr_controls)
+        self.curr_variable = self.iterate_variables()
+
+    def iterate_rules(self, depth, size):
+        rules = [0]
+
+        while len(rules) <= depth:
+            yield rules
+            rules[0] += 1
+            for i in range(len(rules) - 1):
+                if rules[i] >= size:
+                    rules[i] = 0
+                    rules[i + 1] += 1
+
+            if rules[-1] >= size:
+                rules = [0 for _ in range(len(rules) + 1)]
+
+        yield None
+
+    def iterate_variables(self):
+        if self.curr_action is None:
+            return self.curr_action
+
+        actions = [self.actions_pool[i] for i in self.curr_action]
+        variable_count = self.find_variables(actions)
+
+        variables = {}
+        for variable in self.variables_pool:
+            name, _ = variable.split(':')
+            if name not in variables:
+                variables[name] = []
+            variables[name].append(variable)
+
+        result = []
+        for variable, count in variable_count.items():
+            # count = min(count, len(variables[variable]))
+            count = random.randint(1, count)
+            for _ in range(count):
+                result.append(random.choice(variables[variable]))
+
+        return result
+
+    def generate(self):
+        # Generate new variables everytime we iterate actions
+        # Run out of actions, do it again with next control
+        # Run out of controls, reload
+        if self.curr_action is None:
             self.curr_actions = self.iterate_rules(self.action_depth,
                                                    self.action_size)
-            self.curr_controls = self.iterate_rules(self.control_depth,
-                                                    self.control_size)
-
             self.curr_action = next(self.curr_actions)
-            self.curr_control = next(self.curr_controls)
             self.curr_variable = self.iterate_variables()
+            self.curr_control = next(self.curr_controls)
+            if self.curr_control is None:
+                self.logger.info('Finish Generation')
+                while not self.coverage.up_to_date():
+                    print(self.coverage.redis.get('processed'))
+                    print(self.coverage.redis.get('generated'))
+                    time.sleep(0.5)
+                self.load()
+                self.coverage.reset()
+                self.logger.info('New Set')
 
-        def iterate_rules(self, depth, size):
-            rules = [0]
+        actions = [self.actions_pool[i] for i in self.curr_action]
+        controls = [self.grammar_cache['controls'][self.controls_pool[i]]
+                    for i in self.curr_control]
 
-            while len(rules) <= depth:
-                yield rules
-                rules[0] += 1
-                for i in range(len(rules) - 1):
-                    if rules[i] >= size:
-                        rules[i] = 0
-                        rules[i + 1] += 1
+        lines = []
+        assigned_variables = {}
+        resolved_variables = {}
+        variable_list = []
+        for i, variable in enumerate(self.curr_variable):
+            rule = variable.split(':')[0]
+            if rule not in assigned_variables:
+                assigned_variables[rule] = []
+            curr_var = f'var{i}'
 
-                if rules[-1] >= size:
-                    rules = [0 for _ in range(len(rules) + 1)]
+            assigned_variables[rule].append(curr_var)
+            variable_list.append(curr_var)
+            resolved = self.grammar_cache['variables'][variable]
+            resolved_variables[curr_var] = variable
+            lines.append(f'var {curr_var}={resolved}')
 
-            yield None
+        random.shuffle(actions)
+        assigned_variables_copy = copy.deepcopy(assigned_variables)
+        actions_to_variables = []
+        for action in actions:
+            resolved = self.grammar_cache['actions'][action]
+            variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
+            m = re.search(variable_regex, resolved)
+            rule = m.group('xref')
+            if assigned_variables[rule]:
+                choice = assigned_variables[rule].pop()
+            else:
+                choice = random.choice(assigned_variables_copy[rule])
 
-        def iterate_variables(self):
-            if self.curr_action is None:
-                return self.curr_action
+            actions_to_variables.append((action, choice))
+            lines.append(resolved.replace(f'!{rule}!', choice))
 
-            actions = [self.actions_pool[i] for i in self.curr_action]
-            variable_count = self.find_variables(actions)
+        equation = '{}'.join(variable_list)
+        interactions = []
+        for _ in range(len(variable_list) - 1):
+            interactions.append(random.choice(self.interactions))
+        equation = equation.format(*interactions)
+        lines.append('var result=' + equation)
 
-            variables = {}
-            for variable in self.variables_pool:
-                name, _ = variable.split(':')
-                if name not in variables:
-                    variables[name] = []
-                variables[name].append(variable)
+        controls_fmt = []
+        for control in controls:
+            controls_fmt.append(control.replace('#actions#', '{}'))
 
-            result = []
-            for variable, count in variable_count.items():
-                # count = min(count, len(variables[variable]))
-                count = random.randint(1, count)
-                for _ in range(count):
-                    result.append(random.choice(variables[variable]))
+        control_wrapper = '{}'
+        for control in controls_fmt:
+            control_wrapper = control_wrapper.format(control)
 
-            return result
+        control_wrapper = control_wrapper.format(';'.join(lines))
 
-        def generate(self):
-            # Generate new variables everytime we iterate actions
-            # Run out of actions, do it again with next control
-            # Run out of controls, reload
-            if self.curr_action is None:
-                self.curr_actions = self.iterate_rules(self.action_depth,
-                                                       self.action_size)
-                self.curr_action = next(self.curr_actions)
-                self.curr_variable = self.iterate_variables()
-                self.curr_control = next(self.curr_controls)
-                if self.curr_control is None:
-                    self.logger.info('Finish Generation')
-                    while not self.coverage.up_to_date():
-                        print(self.coverage.redis.get('processed'))
-                        print(self.coverage.redis.get('generated'))
-                        time.sleep(0.5)
-                    self.load()
-                    self.coverage.reset()
-                    self.logger.info('New Set')
+        result = self.wrapper.format(control_wrapper)
+        result = "'" + result + "'"
 
-            actions = [self.actions_pool[i] for i in self.curr_action]
-            controls = [self.grammar_cache['controls'][self.controls_pool[i]]
-                        for i in self.curr_control]
-
-            lines = []
-            assigned_variables = {}
-            resolved_variables = {}
-            variable_list = []
-            for i, variable in enumerate(self.curr_variable):
-                rule = variable.split(':')[0]
-                if rule not in assigned_variables:
-                    assigned_variables[rule] = []
-                curr_var = f'var{i}'
-
-                assigned_variables[rule].append(curr_var)
-                variable_list.append(curr_var)
-                resolved = self.grammar_cache['variables'][variable]
-                resolved_variables[curr_var] = variable
-                lines.append(f'var {curr_var}={resolved}')
-
-            random.shuffle(actions)
-            assigned_variables_copy = copy.deepcopy(assigned_variables)
-            actions_to_variables = []
-            for action in actions:
-                resolved = self.grammar_cache['actions'][action]
-                variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
-                m = re.search(variable_regex, resolved)
-                rule = m.group('xref')
-                if assigned_variables[rule]:
-                    choice = assigned_variables[rule].pop()
-                else:
-                    choice = random.choice(assigned_variables_copy[rule])
-
-                actions_to_variables.append((action, choice))
-                lines.append(resolved.replace(f'!{rule}!', choice))
-
-            equation = '{}'.join(variable_list)
-            interactions = []
-            for _ in range(len(variable_list) - 1):
-                interactions.append(random.choice(self.interactions))
-            equation = equation.format(*interactions)
-            lines.append('var result=' + equation)
-
-            controls_fmt = []
-            for control in controls:
-                controls_fmt.append(control.replace('#actions#', '{}'))
-
-            control_wrapper = '{}'
-            for control in controls_fmt:
-                control_wrapper = control_wrapper.format(control)
-
-            control_wrapper = control_wrapper.format(';'.join(lines))
-
-            result = self.wrapper.format(control_wrapper)
-            result = "'" + result + "'"
-
-            id = ';'.join([':'.join(map(str, self.curr_action)),
-                           ':'.join(map(str, self.curr_control))])
-            final = len(self.curr_action) == self.action_depth
-            self.coverage.store(id, actions_to_variables, resolved_variables,
-                                controls, interactions, final)
+        id = ';'.join([':'.join(map(str, self.curr_action)),
+                       ':'.join(map(str, self.curr_control))])
+        final = len(self.curr_action) == self.action_depth
+        self.coverage.store(id, actions_to_variables, resolved_variables,
+                            controls, interactions, final)
 
         self.curr_action = next(self.curr_actions)
         self.curr_variable = self.iterate_variables()
