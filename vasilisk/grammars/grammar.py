@@ -6,7 +6,7 @@ import random
 import re
 import time
 
-rom collections import Counter
+from collections import Counter
 
 from coverage.groups import handler
 
@@ -19,8 +19,8 @@ class Grammar(BaseGrammar):
 
         current_dir = os.path.dirname(os.path.realpath(__file__))
         templates = os.path.join(current_dir, 'templates')
-
-       dependencies = os.path.join(templates, 'dependencies')
+        
+        dependencies = os.path.join(templates, 'dependencies')
         grammar_deps = [
             os.path.join(dependencies, grammar)
             for grammar in os.listdir(os.path.join(dependencies))
