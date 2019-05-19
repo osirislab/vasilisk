@@ -46,3 +46,62 @@ datetype :=
 
 obj :=
     {%repeat%(+object:name_value_pair+, ",")}
+
+maptype :=
+    new Map(+map:map_arg+)
+
+numbertype :=
+    new Number(+value:valtype+)
+    new Number(+common:int+)
+    new Number("+common:int+")
+    Number(+value:valtype+)
+    Number(+common:int+)
+    Number("+common:int+")
+    Number.EPSILON
+    Number.MAX_SAFE_INTEGER
+    Number.MAX_VALUE
+    Number.MIN_SAFE_INTEGER
+    Number.MIN_VALUE
+    Number.NaN
+    Number.NEGATIVE_INFINITY
+    Number.POSITIVE_INFINITY
+
+settype :=
+    new Set(+set:set_arg+)
+
+stringtype :=
+   "+common:text+"
+    new String("+common:text+")
+
+symboltype :=
+   Symbol.iterator
+   Symbol.match
+   Symbol.replace
+   Symbol.search
+   Symbol.split
+   Symbol.hasInstance
+   Symbol.isConcatSpreadable
+   Symbol.unscopables
+   Symbol.species
+   Symbol.toPrimitive
+   Symbol.toStringTag
+
+valtype :=
+    +nulls+
+    +common:int+
+    +common:decimal_number+
+    +common:short_int+
+    +common:intoverflow+
+    +common:byte+
+    +common:object+
+    +common:bool+
+    "+common:text+"
+    +array:arrtype+
+    +object:objtype+
+    +symbol:symboltype+
+
+weakmaptype :=
+    (new WeakMap(+weakmap:weakmaparg+))
+
+weaksettype :=
+    (new WeakSet(+weakset:weaksetarg+))
