@@ -87,7 +87,7 @@ symboltype :=
    Symbol.toStringTag
 
 valtype :=
-    +nulls+
+    +value:nulls+
     +common:int+
     +common:decimal_number+
     +common:short_int+

@@ -81,7 +81,6 @@ regexptype :=
     new RegExp("+pattern+")
     RegExp("+pattern+", "+flags+")
     RegExp("+pattern+")
-    new Proxy(+regexptype+, +proxy:proxyhandler+)
 
 %section% := variable
 
