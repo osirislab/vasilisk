@@ -8,4 +8,4 @@ crashes/
 vasilisk/grammars/templates/old
 args.gn
 paper/
-*.profraw
+default.profraw
