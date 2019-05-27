@@ -8,16 +8,9 @@ weaksettype :=
     (new WeakSet(+weaksetarg+))
 
 any_weakset :=
-    !weakset!
     +weaksettype+
 
 statement :=
     +any_weakset+.add(+value:valtype+)
     +any_weakset+.delete(+value:valtype+)
     +any_weakset+.has(+value:valtype+)
-
-%section% := variable
-
-weakset :=
-    var @weakset@; try { @weakset@ = +weaksettype+; } catch (e) {}
-

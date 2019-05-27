@@ -13,7 +13,6 @@ maptype :=
     new Map(+map_arg+)
 
 any_map :=
-    !map!
     +maptype+
 
 statement :=
@@ -28,8 +27,3 @@ statement :=
     +any_map+.set(+value:valtype+, +value:valtype+)
     +any_map+.values()
     +any_map+[Symbol.iterator]()
-
-%section% := variable
-
-map :=
-    var @map@; try { @map@ = +maptype+; } catch (e) {}

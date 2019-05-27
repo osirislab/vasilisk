@@ -19,7 +19,7 @@ class GroupFuzzer(BaseFuzzer):
         self.tests = tests
         self.debug = debug
 
-        coverage_dir = os.path.join('/tmp', 'vasilisk_coverage')
+        coverage_dir = os.path.join('/dev/shm', 'vasilisk_coverage')
         if not os.path.exists(coverage_dir):
             self.logger.info('creating coverage dir')
             os.makedirs(coverage_dir)
@@ -42,6 +42,7 @@ class GroupFuzzer(BaseFuzzer):
                    '--trace-turbo-path', self.coverage_paths[thread], '-e']
 
         cmd = ' '.join([self.d8] + options + [test_case])
+        self.logger.debug(cmd)
         try:
             return subprocess.check_output(cmd, shell=True, timeout=5)
         except subprocess.TimeoutExpired as e:
@@ -58,6 +59,8 @@ class GroupFuzzer(BaseFuzzer):
         id, grammar = test_case
 
         output = self.execute(grammar, thread)
+
+        self.logger.debug(output)
 
         status = self.validate(output)
         if status == 1:

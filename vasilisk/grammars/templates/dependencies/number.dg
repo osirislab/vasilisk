@@ -34,8 +34,3 @@ statement :=
     !number!.toString(+common:byte_int+)
     !number!.toString(%range%(0-36))
     !number!.valueOf()
-
-%section% := variable
-
-number :=
-    var @number@; try { @number@ = +numbertype+; } catch (e) {}

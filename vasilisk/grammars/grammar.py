@@ -423,7 +423,6 @@ class Grammar(BaseGrammar):
 
         result = []
         for variable, count in variable_count.items():
-            # count = min(count, len(variables[variable]))
             count = random.randint(1, count)
             for _ in range(count):
                 result.append(random.choice(variables[variable]))
@@ -477,6 +476,8 @@ class Grammar(BaseGrammar):
             resolved = self.grammar_cache['actions'][action]
             variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
             m = re.search(variable_regex, resolved)
+            if not m:
+                print(action, resolved)
             rule = m.group('xref')
             if assigned_variables[rule]:
                 choice = assigned_variables[rule].pop()
@@ -522,6 +523,8 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     grammar = Grammar()
-    while True:
-        grammar.generate()
-        break
+    start_time = time.time()
+    for _ in range(100000):
+        print(grammar.generate())
+
+    print('took :{} seconds'.format(time.time() - start_time))

@@ -16,8 +16,3 @@ symboltype :=
 statement :=
     !symbol!.toString()
     !symbol!.valueOf()
-
-%section% := variable
-
-symbol :=
-    var @symbol@ = +symboltype+;

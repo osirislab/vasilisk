@@ -8,7 +8,6 @@ settype :=
     new Set(+set_arg+)
 
 any_set :=
-    !set!
     +settype+
 
 statement :=
@@ -22,8 +21,3 @@ statement :=
     +any_set+.keys()
     +any_set+.values()
     +any_set+[Symbol.iterator]()
-
-%section% := variable
-
-set :=
-    var @set@; try { @set@ = +settype+; } catch (e) {}
