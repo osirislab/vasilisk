@@ -23,7 +23,7 @@ class GroupFuzzer(BaseFuzzer):
         self.group_flag = True
         self.group_size = 20
 
-        coverage_dir = os.path.join('/tmp', 'vasilisk_coverage')
+        coverage_dir = os.path.join('/dev/shm', 'vasilisk_coverage')
         if not os.path.exists(coverage_dir):
             self.logger.info('creating coverage dir')
             os.makedirs(coverage_dir)
@@ -59,6 +59,7 @@ class GroupFuzzer(BaseFuzzer):
             
             self.coverage_count += 1
 
+        #self.logger.debug(cmd)
         try:
             return subprocess.check_output(cmd, shell=True, timeout=5)
         except subprocess.TimeoutExpired as e:
@@ -75,6 +76,8 @@ class GroupFuzzer(BaseFuzzer):
         id, grammar = test_case
 
         output = self.execute(grammar, thread)
+
+        self.logger.debug(output)
 
         status = self.validate(output)
         if status == 1:

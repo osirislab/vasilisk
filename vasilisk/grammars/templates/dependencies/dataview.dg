@@ -10,7 +10,6 @@ dataviewtype :=
 
 any_dataview :=
     +dataviewtype+
-    !dataview!
 
 dataviewidx :=
     +common:byte_int+

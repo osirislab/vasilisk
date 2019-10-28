@@ -67,8 +67,3 @@ statement :=
     !date!.toTimeString()
     !date!.toUTCString()
     !date!.valueOf()
-
-%section% := variable
-
-date :=
-    var @date@; try { @date@ = +datetype+; } catch(e) {}

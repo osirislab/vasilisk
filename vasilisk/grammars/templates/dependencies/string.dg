@@ -13,7 +13,6 @@ stringtype :=
 
 
 any_string :=
-    !string!
     +stringtype+
 
 statement :=
@@ -73,9 +72,3 @@ statement :=
     +any_string+.trimRight()
     +any_string+.valueOf()
     +any_string+[Symbol.iterator]()
-
-
-%section% := variable
-
-string :=
-    var @string@; try { @string@ = +stringtype+; } catch (e) {}

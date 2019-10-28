@@ -11,7 +11,6 @@ weakmaptype :=
     (new WeakMap(+weakmaparg+))
 
 any_weakmap :=
-    !weakmap!
     +weakmaptype+
 
 statement :=
@@ -19,8 +18,3 @@ statement :=
     +any_weakmap+.get(+value:valtype+)
     +any_weakmap+.has(+value:valtype+)
     +any_weakmap+.set(+value:valtype+, +value:valtype+)
-
-%section% := variable
-
-weakmap :=
-    var @weakmap@; try { @weakmap@ = +weakmaptype+; } catch (e) {}
