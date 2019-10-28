@@ -50,8 +50,8 @@ array :=
     !arrtype![+common:decimal_number+] = !valtype!
 
 boolean :=
-    !boolean:bool!.toString()
-    !boolean:bool!.valueOf()
+    !bool!.toString()
+    !bool!.valueOf()
 
 buffer :=
     ArrayBuffer.isView(!arraybuffertype!)

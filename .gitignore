@@ -8,4 +8,5 @@ crashes/
 vasilisk/grammars/templates/old
 args.gn
 paper/
-default.profraw
+coverage_data
+*.profraw
