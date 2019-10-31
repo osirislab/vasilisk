@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import logging
 from base import BaseMutator
-from coverage.groups import recorder
-from coverage.groups.group import string_to_group, Group
+#from coverage.groups.group import string_to_group, Group
 from json import JSONDecodeError, loads
 
 class GroupMutator(BaseMutator):
