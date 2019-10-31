@@ -10,7 +10,8 @@ def string_to_group(json_string):
 
 
 class Group(object):
-    """ Expects a list of tuples in the format (grammar, concrete test case)"""
+    """ Expects a list of tuples in the format (grammar, 
+    concrete test case, rule)"""
     def __init__(self, actions_to_variables, resolved_variables,
                  controls, interactions):
         self.actions_to_variables = actions_to_variables
@@ -28,6 +29,13 @@ class Group(object):
                 self.variables, 
                 self.controls, 
                 self.interactions]
+    
+    def pack(elements):
+        a_to_v, v, c, i = elements
+        self.actions_to_variables = a_to_v
+        self.variables = v
+        self.controls = c
+        self.interactions = i
 
     def to_string(self):
         store_obj = {
