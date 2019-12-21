@@ -411,7 +411,7 @@ class Grammar(BaseGrammar):
 
     def iterate_variables(self):
         if self.curr_action is None:
-            return self.curr_action
+            return None
 
         actions = [self.actions_pool[i] for i in self.curr_action]
         variable_count = self.find_variables(actions)
@@ -433,6 +433,18 @@ class Grammar(BaseGrammar):
 
     def mutate(self, group):
         return self.build_group(group)
+
+    def mutate_interactions(self, interactions):
+        rand_idx = random.randint(0, len(interactions) - 1)
+        interactions[rand_idx] = random.choice(self.interactions)
+        return interactions
+
+    def mutate_actions(self, actions):
+        # new_action = random.choice(self.actions.keys())
+        pass
+
+    def mutate_variables(self, variables):
+        pass
 
     def build_group(self, group):
         actions, variables, controls, interactions = group.unpack()

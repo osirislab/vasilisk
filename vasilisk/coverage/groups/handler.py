@@ -45,7 +45,7 @@ class CoverageHandler(object):
         if final:
             group = Group(actions, resolved_variables,
                           controls, interactions)
-            print(group)
+            print(group.to_string())
             self.redis.lpush('finals', id)
             self.redis.set(f'group:{id}', group.to_string())
 
