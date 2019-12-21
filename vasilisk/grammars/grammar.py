@@ -85,6 +85,8 @@ class Grammar(BaseGrammar):
         self.curr_control = None
         self.curr_variable = None
 
+        self.mutate_set = []
+
         self.load_pools()
         self.load()
         self.coverage = handler.CoverageHandler()
@@ -429,7 +431,44 @@ class Grammar(BaseGrammar):
 
         return result
 
+    def mutate(self, group):
+        return self.build_group(group)
+
+    def build_group(self, group):
+        actions, variables, controls, interactions = group.unpack()
+        lines = []
+
+        for name, variable in variables.items():
+            lines.append(f'var {name}={variable}')
+
+        for action, choice in actions:
+            action_template = self.grammar_cache['actions'][action]
+            variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
+            m = re.search(variable_regex, action_template)
+            if not m:
+                logging.debug(action, action_template)
+            rule = m.group('xref')
+            lines.append(action_template.replace(f'!{rule}!', choice))
+
+        equation = '{}'.join(variables.keys()).format(*interactions)
+        lines.append('var result=' + equation)
+
+        controls_fmt = []
+        for control in controls:
+            controls_fmt.append(control.replace('#actions#', '{}'))
+
+        control_wrapper = '{}'
+        for control in controls_fmt:
+            control_wrapper = control_wrapper.format(control)
+
+        control_wrapper = control_wrapper.format(';'.join(lines))
+
+        result = self.wrapper.format(control_wrapper)
+        return f"'{result}'"
+
     def generate(self):
+        if self.mutate_set:
+            return self.mutate(self.mutate_set.pop())
         # Generate new variables everytime we iterate actions
         # Run out of actions, do it again with next control
         # Run out of controls, reload
@@ -442,12 +481,14 @@ class Grammar(BaseGrammar):
             if self.curr_control is None:
                 self.logger.info('Finish Generation')
                 while not self.coverage.up_to_date():
-                    print(self.coverage.redis.get('processed'))
-                    print(self.coverage.redis.get('generated'))
+                    self.logger.debug(self.coverage.redis.get('processed'))
+                    self.logger.debug(self.coverage.redis.get('generated'))
                     time.sleep(0.5)
                 self.load()
                 self.coverage.reset()
                 self.logger.info('New Set')
+                if self.coverage.get_num_interesting() == 10000:
+                    self.mutate_set = self.coverage.get_most_interesting()
 
         actions = [self.actions_pool[i] for i in self.curr_action]
         controls = [self.grammar_cache['controls'][self.controls_pool[i]]
@@ -471,20 +512,20 @@ class Grammar(BaseGrammar):
 
         random.shuffle(actions)
         assigned_variables_copy = copy.deepcopy(assigned_variables)
-        actions_to_variables = []
+        actions_to_variables = {}
         for action in actions:
             resolved = self.grammar_cache['actions'][action]
             variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
             m = re.search(variable_regex, resolved)
             if not m:
-                print(action, resolved)
+                self.logger.debug(action, resolved)
             rule = m.group('xref')
             if assigned_variables[rule]:
                 choice = assigned_variables[rule].pop()
             else:
                 choice = random.choice(assigned_variables_copy[rule])
 
-            actions_to_variables.append((action, choice))
+            actions_to_variables[action] = choice
             lines.append(resolved.replace(f'!{rule}!', choice))
 
         equation = '{}'.join(variable_list)

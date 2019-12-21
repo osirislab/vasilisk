@@ -5,16 +5,16 @@ import uuid
 
 def string_to_group(json_string):
     store_obj = json.loads(json_string)
-    return Group(store_obj['action_vars'], store_obj['vars'],
-                 store_obj['controls'], store_obj['interactions'])
+    return Group(store_obj['a'], store_obj['v'],
+                 store_obj['c'], store_obj['i'])
 
 
 class Group(object):
-    """ Expects a list of tuples in the format (grammar, 
+    """ Expects a list of tuples in the format (grammar,
     concrete test case, rule)"""
     def __init__(self, actions_to_variables, resolved_variables,
                  controls, interactions):
-        self.actions_to_variables = actions_to_variables
+        self.actions = actions_to_variables
         self.variables = resolved_variables
         self.controls = controls
         self.interactions = interactions
@@ -25,24 +25,24 @@ class Group(object):
             os.makedirs(self.store_dir)
 
     def unpack(self):
-        return [self.actions_to_variables,
-                self.variables, 
-                self.controls, 
+        return [self.actions,
+                self.variables,
+                self.controls,
                 self.interactions]
-    
-    def pack(elements):
-        a_to_v, v, c, i = elements
-        self.actions_to_variables = a_to_v
+
+    def pack(self, elements):
+        a, v, c, i = elements
+        self.actions = a
         self.variables = v
         self.controls = c
         self.interactions = i
 
     def to_string(self):
         store_obj = {
-            'action_vars': self.actions_to_variables,
-            'vars': self.variables,
-            'controls': self.controls,
-            'interactions': self.interactions
+            'a': self.actions,
+            'v': self.variables,
+            'c': self.controls,
+            'i': self.interactions
         }
 
         return json.dumps(store_obj)

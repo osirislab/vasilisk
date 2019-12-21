@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+import time
 import uuid
 
 from datetime import datetime
@@ -11,17 +12,15 @@ from .base import BaseFuzzer
 
 
 class GroupFuzzer(BaseFuzzer):
-    def __init__(self, threads, d8, crashes, tests, debug, coverage_tests = True):
+    def __init__(self, threads, d8, crashes, tests, debug,
+                 code_coverage=True):
         self.logger = logging.getLogger(__name__)
 
         self.d8 = d8
         self.crashes = crashes
         self.tests = tests
         self.debug = debug
-        self.coverage_tests = coverage_tests
-        self.coverage_count = 0
-        self.group_flag = True
-        self.group_size = 20
+        self.code_coverage = code_coverage
 
         coverage_dir = os.path.join('/dev/shm', 'vasilisk_coverage')
         if not os.path.exists(coverage_dir):
@@ -46,20 +45,12 @@ class GroupFuzzer(BaseFuzzer):
                    '--trace-turbo-path', self.coverage_paths[thread], '-e']
 
         cmd = ' '.join([self.d8] + options + [test_case])
-        if self.coverage_tests:
-            if self.group_size == 0:
-                self.group_size = 20
-                self.group_flag = False
+        if self.code_coverage:
+            env_var = (f"LLVM_PROFILE_FILE={os.getcwd()}/coverage_data/"
+                       f"{time.time()}-{thread}.profraw")
+            cmd = f"{env_var} {cmd}"
 
-            if self.group_flag or self.coverage_count % 2**9 == 0:
-                self.group_flag = True
-                self.group_size -= 1
-                env_var = f"LLVM_PROFILE_FILE={os.getcwd()}/coverage_data/epoch{self.coverage_count}.profraw"
-                cmd = f"{env_var} {cmd}"
-            
-            self.coverage_count += 1
-
-        #self.logger.debug(cmd)
+        self.logger.debug(cmd)
         try:
             return subprocess.check_output(cmd, shell=True, timeout=5)
         except subprocess.TimeoutExpired as e:

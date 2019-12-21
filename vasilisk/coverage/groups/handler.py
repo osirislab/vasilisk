@@ -23,20 +23,50 @@ class CoverageHandler(object):
             scores[id] = self.redis.get(f'score:{id}')
 
         for id, score in scores.most_common(10):
-            group_string = self.redis.get(f'group:{id}')
-            group = string_to_group(group_string)
-            self.redis.set(f'interesting:{group.store()}', score)
+            self.redis.set(f'i_group:{id}', self.redis.get(f'group:{id}'))
+            self.redis.set(f'i_score:{id}', self.redis.get(f'score:{id}'))
+            self.redis.lpush('interesting', id)
+
+        while True:
+            id = self.redis.lpop('finals')
+            if not id:
+                break
+            self.redis.delete(f'group:{id}')
+            self.redis.delete(f'score:{id}')
 
     def up_to_date(self):
         if self.redis.get('generated') == self.redis.get('processed'):
             return True
         return False
 
-    def store(self, id, actions_to_variables, resolved_variables,
+    def store(self, id, actions, resolved_variables,
               controls, interactions, final=False):
         self.redis.incr('generated')
         if final:
-            group = Group(actions_to_variables, resolved_variables,
+            group = Group(actions, resolved_variables,
                           controls, interactions)
+            print(group)
             self.redis.lpush('finals', id)
             self.redis.set(f'group:{id}', group.to_string())
+
+    def get_most_interesting(self):
+        scores = Counter()
+        for id in self.redis.lrange('interesting', 0, -1):
+            scores[id] = self.redis.get(f'i_score:{id}')
+
+        interesting = []
+        for id, score in scores.most_common(100):
+            interesting.append(
+                string_to_group(self.redis.get(f'i_group:{id}')))
+
+        while True:
+            id = self.redis.lpop('interesting')
+            if not id:
+                break
+            self.redis.delete(f'i_group:{id}')
+            self.redis.delete(f'i_score:{id}')
+
+        return interesting
+
+    def get_num_interesting(self):
+        return self.redis.llen('interesting')

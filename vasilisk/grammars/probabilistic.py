@@ -95,4 +95,4 @@ class ProbabilisticGrammar(DharmaGrammar):
 
         self.create_dharma(self.grammars)
 
-        return  ((value, control), super().generate())
+        return ((value, control), super().generate())
