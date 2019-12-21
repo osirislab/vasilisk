@@ -211,7 +211,6 @@ class Grammar(BaseGrammar):
             cumulative_subrules = []
             for subrule in subrules:
                 new_subrules = self.parse_xrefs(grammar, subrule)
-                # print(new_subrules)
 
                 if new_subrules:
                     cumulative_subrules += new_subrules
@@ -380,6 +379,13 @@ class Grammar(BaseGrammar):
                                            self.control_size)
         self.variables_pool = self.load_variables(self.actions_pool)
 
+        self.variables = {}
+        for variable in self.variables_pool:
+            name, _ = variable.split(':')
+            if name not in self.variables:
+                self.variables[name] = []
+            self.variables[name].append(variable)
+
         self.load_cache('actions', self.actions_pool)
         self.load_cache('controls', self.controls_pool)
         self.load_cache('variables', self.variables_pool)
@@ -416,35 +422,58 @@ class Grammar(BaseGrammar):
         actions = [self.actions_pool[i] for i in self.curr_action]
         variable_count = self.find_variables(actions)
 
-        variables = {}
-        for variable in self.variables_pool:
-            name, _ = variable.split(':')
-            if name not in variables:
-                variables[name] = []
-            variables[name].append(variable)
-
         result = []
         for variable, count in variable_count.items():
             count = random.randint(1, count)
             for _ in range(count):
-                result.append(random.choice(variables[variable]))
+                result.append(random.choice(self.variables[variable]))
 
         return result
 
     def mutate(self, group):
+        mutations = [self.mutate_actions, self.mutate_variables,
+                     self.mutate_interactions]
+        mutation = random.choice(mutations)
+        group = mutation(group)
+
         return self.build_group(group)
 
-    def mutate_interactions(self, interactions):
+    def mutate_interactions(self, group):
+        interactions = group.get_interactions()
         rand_idx = random.randint(0, len(interactions) - 1)
         interactions[rand_idx] = random.choice(self.interactions)
-        return interactions
+        group.set_interactions(interactions)
+        return group
 
-    def mutate_actions(self, actions):
-        # new_action = random.choice(self.actions.keys())
-        pass
+    def mutate_actions(self, group):
+        actions = group.get_actions()
+        mutate_action = random.choice(actions.keys())
+        corresponding_var = actions[mutate_action]
+        action_type, _ = mutate_action.split(':')
+        num_choices = len(self.corpus['actions'][action_type])
+        new_action = random.randint(0, num_choices - 1)
+        del actions[mutate_action]
+        actions[':'.join((action_type, new_action))] = corresponding_var
+        group.set_actions(actions)
+        return group
 
-    def mutate_variables(self, variables):
-        pass
+    def mutate_variables(self, group):
+        variables = group.get_variables()
+        mutate = random.choice(variables.keys())
+        variable_type, _ = variables[mutate].split(':')
+        num_choices = len(self.corpus['variables'][variable_type])
+        new_variable = random.randint(0, num_choices - 1)
+        variables[mutate] = ':'.join((variable_type, new_variable))
+        group.set_variables(variables)
+        return group
+
+    def get_var_type(self, action):
+        variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
+        m = re.search(variable_regex, action)
+        if not m:
+            return None
+            self.logger.debug(action, action)
+        return m.group('xref')
 
     def build_group(self, group):
         actions, variables, controls, interactions = group.unpack()
@@ -453,14 +482,10 @@ class Grammar(BaseGrammar):
         for name, variable in variables.items():
             lines.append(f'var {name}={variable}')
 
-        for action, choice in actions:
+        for action, var in actions:
             action_template = self.grammar_cache['actions'][action]
-            variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
-            m = re.search(variable_regex, action_template)
-            if not m:
-                logging.debug(action, action_template)
-            rule = m.group('xref')
-            lines.append(action_template.replace(f'!{rule}!', choice))
+            var_type = self.get_var_type(action_template)
+            lines.append(action_template.replace(f'!{var_type}!', var))
 
         equation = '{}'.join(variables.keys()).format(*interactions)
         lines.append('var result=' + equation)
@@ -493,14 +518,15 @@ class Grammar(BaseGrammar):
             if self.curr_control is None:
                 self.logger.info('Finish Generation')
                 while not self.coverage.up_to_date():
-                    self.logger.debug(self.coverage.redis.get('processed'))
-                    self.logger.debug(self.coverage.redis.get('generated'))
+                    self.logger.info(self.coverage.redis.get('processed'))
+                    self.logger.info(self.coverage.redis.get('generated'))
                     time.sleep(0.5)
                 self.load()
                 self.coverage.reset()
                 self.logger.info('New Set')
                 if self.coverage.get_num_interesting() == 10000:
-                    self.mutate_set = self.coverage.get_most_interesting()
+                    logging.info('Start Mutation')
+                    self.mutate_set = self.coverage.get_most_interesting() * 5
 
         actions = [self.actions_pool[i] for i in self.curr_action]
         controls = [self.grammar_cache['controls'][self.controls_pool[i]]
@@ -527,18 +553,16 @@ class Grammar(BaseGrammar):
         actions_to_variables = {}
         for action in actions:
             resolved = self.grammar_cache['actions'][action]
-            variable_regex = r'''\!(?P<xref>[a-zA-Z0-9:_]+)\!'''
-            m = re.search(variable_regex, resolved)
-            if not m:
-                self.logger.debug(action, resolved)
-            rule = m.group('xref')
-            if assigned_variables[rule]:
-                choice = assigned_variables[rule].pop()
+            var_type = self.get_var_type(resolved)
+            if not var_type:
+                continue
+            if assigned_variables[var_type]:
+                var_choice = assigned_variables[var_type].pop()
             else:
-                choice = random.choice(assigned_variables_copy[rule])
+                var_choice = random.choice(assigned_variables_copy[rule])
 
-            actions_to_variables[action] = choice
-            lines.append(resolved.replace(f'!{rule}!', choice))
+            actions_to_variables[action] = var_choice
+            lines.append(resolved.replace(f'!{var_type}!', var_choice))
 
         equation = '{}'.join(variable_list)
         interactions = []

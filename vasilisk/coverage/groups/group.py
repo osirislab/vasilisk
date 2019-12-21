@@ -53,3 +53,21 @@ class Group(object):
             f.write(self.to_string())
 
         return identifier
+
+    def set_actions(self, actions):
+        self.actions = actions
+
+    def get_actions(self):
+        return self.actions
+
+    def set_variables(self, variables):
+        self.variables = variables
+
+    def get_variables(self):
+        return self.variables
+
+    def set_interactions(self, interactions):
+        self.interactions = interactions
+
+    def get_interactions(self):
+        return self.interactions
