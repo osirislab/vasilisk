@@ -524,7 +524,7 @@ class Grammar(BaseGrammar):
                 self.load()
                 self.coverage.reset()
                 self.logger.info('New Set')
-                if self.coverage.get_num_interesting() == 10000:
+                if self.coverage.get_num_interesting() == 10:
                     logging.info('Start Mutation')
                     self.mutate_set = self.coverage.get_most_interesting() * 5
 
