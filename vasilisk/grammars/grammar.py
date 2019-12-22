@@ -434,24 +434,27 @@ class Grammar(BaseGrammar):
         mutations = [self.mutate_actions, self.mutate_variables,
                      self.mutate_interactions]
         mutation = random.choice(mutations)
-        group = mutation(group)
-
-        return self.build_group(group)
+        return mutation(group)
 
     def mutate_interactions(self, group):
         interactions = group.get_interactions()
-        rand_idx = random.randint(0, len(interactions) - 1)
+        if not interactions:
+            return group
+        elif len(interactions) == 1:
+            rand_idx = 0
+        else:
+            rand_idx = random.randint(0, len(interactions) - 1)
         interactions[rand_idx] = random.choice(self.interactions)
         group.set_interactions(interactions)
         return group
 
     def mutate_actions(self, group):
         actions = group.get_actions()
-        mutate_action = random.choice(actions.keys())
+        mutate_action = random.choice(list(actions.keys()))
         corresponding_var = actions[mutate_action]
         action_type, _ = mutate_action.split(':')
         num_choices = len(self.corpus['actions'][action_type])
-        new_action = random.randint(0, num_choices - 1)
+        new_action = str(random.randint(0, num_choices - 1))
         del actions[mutate_action]
         actions[':'.join((action_type, new_action))] = corresponding_var
         group.set_actions(actions)
@@ -459,10 +462,10 @@ class Grammar(BaseGrammar):
 
     def mutate_variables(self, group):
         variables = group.get_variables()
-        mutate = random.choice(variables.keys())
+        mutate = random.choice(list(variables.keys()))
         variable_type, _ = variables[mutate].split(':')
         num_choices = len(self.corpus['variables'][variable_type])
-        new_variable = random.randint(0, num_choices - 1)
+        new_variable = str(random.randint(0, num_choices - 1))
         variables[mutate] = ':'.join((variable_type, new_variable))
         group.set_variables(variables)
         return group
@@ -482,8 +485,10 @@ class Grammar(BaseGrammar):
         for name, variable in variables.items():
             lines.append(f'var {name}={variable}')
 
-        for action, var in actions:
-            action_template = self.grammar_cache['actions'][action]
+        for action, var in actions.items():
+            rule_name, index = action.split(':')
+            subrule = self.corpus['actions'][rule_name][int(index)]
+            action_template = self.parse_func('actions', subrule)
             var_type = self.get_var_type(action_template)
             lines.append(action_template.replace(f'!{var_type}!', var))
 
@@ -505,7 +510,10 @@ class Grammar(BaseGrammar):
 
     def generate(self):
         if self.mutate_set:
-            return self.mutate(self.mutate_set.pop())
+            id = len(self.mutate_set)
+            group = self.mutate(self.mutate_set.pop())
+            self.coverage.store_group(group)
+            return (id, self.build_group(group))
         # Generate new variables everytime we iterate actions
         # Run out of actions, do it again with next control
         # Run out of controls, reload
@@ -524,7 +532,7 @@ class Grammar(BaseGrammar):
                 self.load()
                 self.coverage.reset()
                 self.logger.info('New Set')
-                if self.coverage.get_num_interesting() == 10:
+                if self.coverage.get_num_interesting() >= 10:
                     logging.info('Start Mutation')
                     self.mutate_set = self.coverage.get_most_interesting() * 5
 

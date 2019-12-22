@@ -22,7 +22,7 @@ class CoverageHandler(object):
         for id in self.redis.lrange('finals', 0, -1):
             scores[id] = self.redis.get(f'score:{id}')
 
-        for id, score in scores.most_common(10):
+        for id, score in scores.most_common(100):
             self.redis.set(f'i_group:{id}', self.redis.get(f'group:{id}'))
             self.redis.set(f'i_score:{id}', self.redis.get(f'score:{id}'))
             self.redis.lpush('interesting', id)
@@ -47,6 +47,10 @@ class CoverageHandler(object):
                           controls, interactions)
             self.redis.lpush('finals', id)
             self.redis.set(f'group:{id}', group.to_string())
+
+    def store_group(self, group):
+        self.redis.incr('generated')
+        self.redis.lpush('mutate', group.to_string())
 
     def get_most_interesting(self):
         scores = Counter()
