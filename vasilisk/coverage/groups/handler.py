@@ -1,4 +1,6 @@
+import os
 import redis
+import subprocess
 
 from collections import Counter
 
@@ -33,6 +35,8 @@ class CoverageHandler(object):
                 break
             self.redis.delete(f'group:{id}')
             self.redis.delete(f'score:{id}')
+
+        self.condense_profraw()
 
     def up_to_date(self):
         if self.redis.get('generated') == self.redis.get('processed'):
@@ -73,3 +77,19 @@ class CoverageHandler(object):
 
     def get_num_interesting(self):
         return self.redis.llen('interesting')
+
+    def condense_profraw(self):
+        coverage_folder = os.path.join(os.getcwd(), 'coverage_data')
+        for file in os.listdir(coverage_folder):
+            if not os.isfile(os.path.join(coverage_folder, file)):
+                continue
+            if file == 'vasilisk.profdata':
+                continue
+            cmd = ['llvm-profdata', 'merge', 'vasilisk.profdata']
+            cmd.append(file)
+            cmd += ['-o', 'vasilisk.profdata']
+            try:
+                subprocess.call(cmd)
+            except Exception:
+                pass
+            os.remove(os.path.join(coverage_folder, file))
