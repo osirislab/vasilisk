@@ -1,3 +1,4 @@
+import logging
 import os
 import redis
 import subprocess
@@ -15,11 +16,13 @@ class CoverageHandler(object):
 
         self.redis.set('generated', 0)
         self.redis.set('processed', 0)
+        self.logger = logging.getLogger(__name__)
 
     def reset(self):
         self.redis.set('generated', 0)
         self.redis.set('processed', 0)
 
+        self.logger.info('Collect Scores')
         scores = Counter()
         for id in self.redis.lrange('finals', 0, -1):
             scores[id] = self.redis.get(f'score:{id}')
@@ -29,6 +32,7 @@ class CoverageHandler(object):
             self.redis.set(f'i_score:{id}', self.redis.get(f'score:{id}'))
             self.redis.lpush('interesting', id)
 
+        self.logger.info('Stored Interesting')
         while True:
             id = self.redis.lpop('finals')
             if not id:
@@ -36,6 +40,8 @@ class CoverageHandler(object):
             self.redis.delete(f'group:{id}')
             self.redis.delete(f'score:{id}')
 
+
+        self.logger.info('Delete Groups')
         self.condense_profraw()
 
     def up_to_date(self):
@@ -81,13 +87,14 @@ class CoverageHandler(object):
     def condense_profraw(self):
         coverage_folder = os.path.join(os.getcwd(), 'coverage_data')
         for file in os.listdir(coverage_folder):
-            if not os.isfile(os.path.join(coverage_folder, file)):
+            if not os.path.isfile(os.path.join(coverage_folder, file)):
                 continue
             if file == 'vasilisk.profdata':
                 continue
-            cmd = ['llvm-profdata', 'merge', 'vasilisk.profdata']
-            cmd.append(file)
-            cmd += ['-o', 'vasilisk.profdata']
+            cmd = ['llvm-profdata', 'merge',
+                   os.path.join(coverage_folder, 'vasilisk.profdata')]
+            cmd.append(os.path.join(coverage_folder, file))
+            cmd += ['-o', os.path.join(coverage_folder, 'vasilisk.profdata')]
             try:
                 subprocess.call(cmd)
             except Exception:

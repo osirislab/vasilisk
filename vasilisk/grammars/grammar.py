@@ -529,10 +529,12 @@ class Grammar(BaseGrammar):
                     self.logger.info(self.coverage.redis.get('processed'))
                     self.logger.info(self.coverage.redis.get('generated'))
                     time.sleep(0.5)
-                self.load()
-                self.coverage.reset()
                 self.logger.info('New Set')
-                if self.coverage.get_num_interesting() >= 10:
+                self.load()
+                self.logger.info('Loaded New Set')
+                self.coverage.reset()
+                self.logger.info('Reset Coverage')
+                if self.coverage.get_num_interesting() >= 400:
                     logging.info('Start Mutation')
                     self.mutate_set = self.coverage.get_most_interesting() * 5
 

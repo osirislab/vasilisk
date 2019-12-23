@@ -52,9 +52,9 @@ class GroupFuzzer(BaseFuzzer):
 
         self.logger.debug(cmd)
         try:
-            return subprocess.check_output(cmd, shell=True, timeout=1)
+            return subprocess.check_output(cmd, shell=True, timeout=0.5)
         except subprocess.TimeoutExpired as e:
-            self.logger.error(e)
+            self.logger.debug(e)
             return 'Invalid'
         except subprocess.CalledProcessError as e:
             if int(e.returncode) == 1:
@@ -87,7 +87,7 @@ class GroupFuzzer(BaseFuzzer):
         if output is 'Invalid':
             return -1
         if output is not None:
-            pre = output.split(b'Begin')[0].replace(b'-', b'').strip()
+            pre = output.split(b'Begin')[0].replace(b'-'*51, b'').strip()
             pre = pre.split(b'tracing.\n')[1]
             pre = pre.split(b' ', 1)[1]
             post = output.split(b'Begin')[1].split(b'Turbofan\n')[2].strip()
