@@ -513,7 +513,7 @@ class Grammar(BaseGrammar):
             id = len(self.mutate_set)
             group = self.mutate(self.mutate_set.pop())
             self.coverage.store_group(group)
-            return (id, self.build_group(group))
+            return (id, True, self.build_group(group))
         # Generate new variables everytime we iterate actions
         # Run out of actions, do it again with next control
         # Run out of controls, reload
@@ -603,7 +603,7 @@ class Grammar(BaseGrammar):
         self.curr_action = next(self.curr_actions)
         self.curr_variable = self.iterate_variables()
 
-        return (id, result)
+        return (id, final, result)
 
 
 if __name__ == '__main__':

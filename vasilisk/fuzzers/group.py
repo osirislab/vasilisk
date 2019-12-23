@@ -40,12 +40,12 @@ class GroupFuzzer(BaseFuzzer):
 
         self.coverage = recorder.CoverageRecorder()
 
-    def execute(self, test_case, thread):
+    def execute(self, test_case, final, thread):
         options = ['--allow-natives-syntax', '--trace-turbo',
                    '--trace-turbo-path', self.coverage_paths[thread], '-e']
 
         cmd = ' '.join([self.d8] + options + [test_case])
-        if self.code_coverage:
+        if self.code_coverage and final:
             env_var = (f"LLVM_PROFILE_FILE={os.getcwd()}/coverage_data/"
                        f"{time.time()}-{thread}.profraw")
             cmd = f"{env_var} {cmd}"
@@ -64,9 +64,9 @@ class GroupFuzzer(BaseFuzzer):
 
     def fuzz(self, test_case, thread):
         unique_id = None
-        id, grammar = test_case
+        id, final, grammar = test_case
 
-        output = self.execute(grammar, thread)
+        output = self.execute(grammar, final, thread)
 
         self.logger.debug(output)
 
