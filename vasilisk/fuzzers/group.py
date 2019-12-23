@@ -52,7 +52,7 @@ class GroupFuzzer(BaseFuzzer):
 
         self.logger.debug(cmd)
         try:
-            return subprocess.check_output(cmd, shell=True, timeout=1)
+            return subprocess.check_output(cmd, shell=True, timeout=0.2)
         except subprocess.TimeoutExpired as e:
             self.logger.error(e)
             return 'Invalid'
